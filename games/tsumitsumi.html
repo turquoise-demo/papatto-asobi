@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>つみつみブロック｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css">
+<style>
+.board{background:#2B2350;display:grid;grid-template-rows:1fr auto;touch-action:none}
+.play{display:flex;justify-content:center;align-items:center;gap:14px;min-height:0;padding:12px 12px 0}
+#well{height:100%;aspect-ratio:1/2;max-width:62vw;display:flex;align-items:flex-start;justify-content:center}
+#cv{border-radius:10px;background:#1B1638;box-shadow:0 0 0 3px #4A3F86}
+.side{display:flex;flex-direction:column;gap:10px;color:#fff;align-self:flex-start;min-width:84px}
+.box{background:#3A3070;border-radius:14px;padding:8px 10px;text-align:center}
+.box small{display:block;font-size:11px;color:#BDB3F0;letter-spacing:.1em}
+.box b{font-size:22px;font-variant-numeric:tabular-nums}
+#next{width:72px;height:72px;display:block;margin:4px auto 0}
+.pads{padding-bottom:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a>
+    <h1 class="title">つみつみブロック</h1>
+    <button class="hbtn" id="pause"><span>ていし</span></button>
+  </div>
+  <div class="board" id="board">
+    <div class="play">
+      <div id="well"><canvas id="cv"></canvas></div>
+      <div class="side">
+        <div class="box"><small>つぎ</small><canvas id="next" width="144" height="144"></canvas></div>
+        <div class="box"><small>てん</small><b id="sc">0</b></div>
+        <div class="box"><small>ライン</small><b id="ln">0</b></div>
+        <div class="box"><small>レベル</small><b id="lv">1</b></div>
+      </div>
+    </div>
+    <div class="pads">
+      <div class="pad">
+        <button class="ctl" id="L" aria-label="ひだり"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#1F2A44" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="ctl" id="R" aria-label="みぎ"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="#1F2A44" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="ctl" id="D" aria-label="はやく おとす"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7" fill="none" stroke="#1F2A44" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="pad">
+        <button class="ctl yellow" id="X" aria-label="まわす"><svg viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="3" stroke-linecap="round"><path d="M19 12a7 7 0 1 1-2.1-5M19 4v4h-4"/></svg></button>
+        <button class="ctl red" id="H" aria-label="ストン">ストン</button>
+      </div>
+    </div>
+    <div class="overlay" id="ov">
+      <p class="msg">つみつみブロック</p>
+      <p class="sub">よこ いちれつ そろえると きえるよ<br>キーボード：← → ↓、↑で まわす、スペースで ストン</p>
+      <div class="choices" id="lvls"></div>
+    </div>
+  </div>
+</div>
+<script src="../shared/kids.js"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const COLS=10,ROWS=20,cv=document.getElementById('cv'),c=cv.getContext('2d'),nc=document.getElementById('next').getContext('2d');
+const PIECES=[
+ {c:'#4FC3F7',s:[[0,1],[1,1],[2,1],[3,1]]},{c:'#FFD23F',s:[[1,0],[2,0],[1,1],[2,1]]},{c:'#B76BE0',s:[[1,0],[0,1],[1,1],[2,1]]},
+ {c:'#7ED957',s:[[1,0],[2,0],[0,1],[1,1]]},{c:'#FF6B6B',s:[[0,0],[1,0],[1,1],[2,1]]},{c:'#4C7DF0',s:[[0,0],[0,1],[1,1],[2,1]]},{c:'#FFA24C',s:[[2,0],[0,1],[1,1],[2,1]]}];
+let grid,cur,next,bag=[],score,lines,level,dropMs,acc,last,run=false,paused=false,clearing=null,startLv=1,CELL=30;
+const well=document.getElementById('well');
+function fit(){const r=well.getBoundingClientRect();CELL=Math.max(8,Math.floor(Math.min(r.height/ROWS,r.width/COLS)));cv.style.width=CELL*COLS+'px';cv.style.height=CELL*ROWS+'px';cv.width=CELL*COLS*devicePixelRatio;cv.height=CELL*ROWS*devicePixelRatio;c.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);draw();}
+new ResizeObserver(fit).observe(well);
+function take(){if(!bag.length)bag=Kids.shuffle([0,1,2,3,4,5,6]);const p=PIECES[bag.pop()];return{c:p.c,s:p.s.map(a=>a.slice()),x:3,y:0,i:PIECES.indexOf(p)};}
+function cells(p,s=p.s,x=p.x,y=p.y){return s.map(([a,b])=>[a+x,b+y]);}
+function hit(p,s,x,y){return cells(p,s,x,y).some(([a,b])=>a<0||a>=COLS||b>=ROWS||(b>=0&&grid[b][a]));}
+function rotate(){if(cur.i===1)return;const n=cur.i===0?4:3;const s=cur.s.map(([a,b])=>[n-1-b,a]);
+  for(const k of [0,-1,1,-2,2]){if(!hit(cur,s,cur.x+k,cur.y)){cur.s=s;cur.x+=k;Kids.tone(700,.04,'square',.03);return;}}}
+function move(d){if(!hit(cur,cur.s,cur.x+d,cur.y)){cur.x+=d;Kids.tone(300,.03,'square',.02);}}
+function soft(){if(!hit(cur,cur.s,cur.x,cur.y+1)){cur.y++;score+=1;}else lock();acc=0;}
+function hard(){let n=0;while(!hit(cur,cur.s,cur.x,cur.y+1)){cur.y++;n++;}score+=n*2;Kids.tone(180,.12,'triangle',.08);lock();}
+function lock(){
+  cells(cur).forEach(([a,b])=>{if(b>=0)grid[b][a]=cur.c;});
+  if(cells(cur).some(([,b])=>b<0)){over();return;}
+  const full=[];grid.forEach((r,i)=>{if(r.every(v=>v))full.push(i);});
+  if(full.length){clearing={rows:full,t:0};const pts=[0,100,300,500,800][full.length]*level;score+=pts;
+    [523,659,784,1047].slice(0,full.length+1).forEach((f,i)=>Kids.tone(f,.15,'triangle',.08,i*.07));
+    if(full.length>=4){Kids.confetti();Kids.say('すごい！');}}
+  else spawn();
+  hud();
+}
+function spawn(){cur=next;next=take();cur.x=cur.i===0?3:3;cur.y=cur.i===0?-1:0;if(hit(cur,cur.s,cur.x,cur.y))over();drawNext();}
+function hud(){document.getElementById('sc').textContent=score;document.getElementById('ln').textContent=lines;document.getElementById('lv').textContent=level;}
+function over(){run=false;Kids.oops();show(`<p class="msg">おしまい！</p><p class="sub">てん ${score}　ライン ${lines}</p>`);}
+function show(head){const o=document.getElementById('ov');o.hidden=false;o.querySelector('.msg')&&0;
+  o.innerHTML=head+'<div class="choices" id="lvls"></div>';buildLv();}
+function buildLv(){const box=document.getElementById('lvls');[[1,'ゆっくり','はじめて'],[4,'ふつう','なれてきた'],[8,'はやい','うでじまん']].forEach(([lv,n,s])=>{
+  const b=document.createElement('button');b.className='choice';b.innerHTML=`${'★'.repeat(lv===1?1:lv===4?2:3)}<span>${n}</span><small>${s}</small>`;b.onclick=()=>start(lv);box.appendChild(b);});}
+function start(lv){startLv=lv;grid=Array.from({length:ROWS},()=>Array(COLS).fill(null));score=0;lines=0;level=lv;bag=[];next=take();spawn();
+  setSpeed();acc=0;last=performance.now();run=true;paused=false;clearing=null;document.getElementById('ov').hidden=true;hud();Kids.blip(800);requestAnimationFrame(loop);}
+function setSpeed(){dropMs=Math.max(70,900*Math.pow(.83,level-1));}
+function loop(t){
+  if(!run)return;const dt=t-last;last=t;
+  if(!paused){
+    if(clearing){clearing.t+=dt;if(clearing.t>260){clearing.rows.forEach(r=>{grid.splice(r,1);grid.unshift(Array(COLS).fill(null));});
+      lines+=clearing.rows.length;const nl=startLv+Math.floor(lines/10);if(nl>level){level=nl;setSpeed();Kids.say('レベル '+level);}clearing=null;spawn();hud();}}
+    else{acc+=dt;if(acc>=dropMs){acc=0;if(!hit(cur,cur.s,cur.x,cur.y+1))cur.y++;else lock();}}
+  }
+  draw();requestAnimationFrame(loop);
+}
+function block(x,y,col,s=CELL,alpha=1,ctx=c){
+  ctx.globalAlpha=alpha;const p=s*.08,r=s*.22;ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(x+p,y+p,s-2*p,s-2*p,r);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.roundRect(x+s*.2,y+s*.16,s*.42,s*.18,s*.09);ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.roundRect(x+p,y+s*.72,s-2*p,s*.2,[0,0,r,r]);ctx.fill();ctx.globalAlpha=1;
+}
+function draw(){
+  if(!grid){c.clearRect(0,0,cv.width,cv.height);return;}
+  const W=CELL*COLS,H=CELL*ROWS;c.clearRect(0,0,W,H);
+  c.strokeStyle='rgba(255,255,255,.05)';c.lineWidth=1;for(let i=1;i<COLS;i++){c.beginPath();c.moveTo(i*CELL+.5,0);c.lineTo(i*CELL+.5,H);c.stroke();}
+  grid.forEach((r,y)=>r.forEach((v,x)=>{if(v){const fl=clearing&&clearing.rows.includes(y);block(x*CELL,y*CELL,fl?'#fff':v,CELL,fl?1-clearing.t/300:1);}}));
+  if(cur&&!clearing){let gy=cur.y;while(!hit(cur,cur.s,cur.x,gy+1))gy++;
+    cells(cur,cur.s,cur.x,gy).forEach(([a,b])=>{if(b>=0){c.strokeStyle=cur.c;c.lineWidth=2;c.globalAlpha=.6;c.beginPath();c.roundRect(a*CELL+3,b*CELL+3,CELL-6,CELL-6,CELL*.2);c.stroke();c.globalAlpha=1;}});
+    cells(cur).forEach(([a,b])=>{if(b>=0)block(a*CELL,b*CELL,cur.c);});}
+  if(paused){c.fillStyle='rgba(0,0,0,.5)';c.fillRect(0,0,W,H);c.fillStyle='#fff';c.font=`800 ${CELL*.9}px 'M PLUS Rounded 1c',sans-serif`;c.textAlign='center';c.fillText('ていし ちゅう',W/2,H/2);}
+}
+function drawNext(){nc.clearRect(0,0,144,144);if(!next)return;const xs=next.s.map(a=>a[0]),ys=next.s.map(a=>a[1]);const w=Math.max(...xs)-Math.min(...xs)+1,h=Math.max(...ys)-Math.min(...ys)+1,s=30;
+  next.s.forEach(([a,b])=>block(72-w*s/2+(a-Math.min(...xs))*s,72-h*s/2+(b-Math.min(...ys))*s,next.c,s,1,nc));}
+const act=f=>()=>{if(run&&!paused&&!clearing){f();draw();}};
+Kids.hold(document.getElementById('L'),act(()=>move(-1)),{repeat:70});
+Kids.hold(document.getElementById('R'),act(()=>move(1)),{repeat:70});
+Kids.hold(document.getElementById('D'),act(soft),{repeat:45,delay:60});
+Kids.hold(document.getElementById('X'),act(rotate));
+Kids.hold(document.getElementById('H'),act(hard));
+addEventListener('keydown',e=>{const k=e.key;const m={ArrowLeft:()=>move(-1),ArrowRight:()=>move(1),ArrowDown:soft,ArrowUp:rotate,x:rotate,' ':hard};
+  if(m[k]){e.preventDefault();act(m[k])();}if(k==='p'||k==='Escape')togglePause();});
+function togglePause(){if(!run)return;paused=!paused;draw();}
+document.getElementById('pause').onclick=togglePause;
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&run)paused=true;});
+buildLv();
+</script>
+</body>
+</html>

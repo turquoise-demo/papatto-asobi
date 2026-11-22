@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ロボバトル｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css">
+<style>
+.board{background:#232046;display:grid;grid-template-rows:auto 1fr auto;touch-action:none}
+.bars{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px 0;color:#fff}
+.side{display:flex;flex-direction:column;gap:4px;min-width:0}
+.side.r{align-items:flex-end}
+.nm{font-size:14px;display:flex;gap:6px;align-items:center}
+.nm i{font-style:normal;color:#FFC83D;letter-spacing:2px}
+.hp,.en{width:100%;background:#3B356E;border-radius:999px;overflow:hidden}
+.hp{height:16px}.en{height:7px;width:70%}
+.hp b,.en b{display:block;height:100%;width:100%;transition:width .2s}
+.hp b{background:linear-gradient(90deg,#7ED957,#FFD23F)}
+.en b{background:#4FC3F7}
+.side.r .hp b,.side.r .en b{margin-left:auto}
+.full b{background:#FFC83D!important;animation:glow .5s infinite alternate}
+@keyframes glow{to{filter:brightness(1.4)}}
+.clock{font-size:26px;background:#3B356E;border-radius:12px;padding:2px 12px;font-variant-numeric:tabular-nums}
+.stage{position:relative;min-height:0}
+#cv{position:absolute;inset:0;width:100%;height:100%}
+.call{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(40px,9vw,90px);color:#FFC83D;-webkit-text-stroke:4px #1F2A44;paint-order:stroke;pointer-events:none;z-index:4;text-align:center}
+.ctl.beam.ready{box-shadow:0 0 0 4px #FFC83D,0 5px 0 rgba(0,0,0,.25)}
+.pads{padding-bottom:12px}
+.pad.atk{display:grid;grid-template-columns:repeat(2,auto);gap:8px}
+.robo{width:120px;height:120px}
+@media (max-width:520px){.pad.atk .ctl{width:50px;height:50px}.clock{font-size:20px}.nm{font-size:12px}.robo{width:80px;height:80px}.choice{min-width:90px;padding:8px}}
+.tate{display:none}@media (orientation:portrait){.tate{display:block}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a>
+    <h1 class="title">ロボバトル</h1>
+  </div>
+  <div class="board">
+    <div class="bars">
+      <div class="side"><div class="nm"><span id="n1">あなた</span><i id="w1"></i></div><div class="hp"><b id="h1"></b></div><div class="en" id="e1w"><b id="e1"></b></div></div>
+      <div class="clock" id="clock">60</div>
+      <div class="side r"><div class="nm"><i id="w2"></i><span id="n2">CPU</span></div><div class="hp"><b id="h2"></b></div><div class="en" id="e2w"><b id="e2"></b></div></div>
+    </div>
+    <div class="stage" id="stage"><canvas id="cv"></canvas><div class="call" id="call" hidden></div>
+      <div class="overlay" id="ov"><p class="msg">ロボバトル</p><p class="sub">ロボットを えらんでね</p><div class="choices" id="pick"></div>
+        <p class="sub">キーボード：← → いどう・↑ ジャンプ・J パンチ・K キック・L ガード・I ビーム</p></div>
+    </div>
+    <div class="pads">
+      <div class="pad">
+        <button class="ctl" id="bL" aria-label="ひだり"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#1F2A44" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="ctl" id="bU" aria-label="ジャンプ"><svg viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" fill="none" stroke="#1F2A44" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="ctl" id="bR" aria-label="みぎ"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="#1F2A44" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="pad atk">
+        <button class="ctl red" id="bP">パンチ</button>
+        <button class="ctl blue" id="bK">キック</button>
+        <button class="ctl yellow" id="bG">ガード</button>
+        <button class="ctl green beam" id="bB">ビーム</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../shared/kids.js"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const stage=document.getElementById('stage'),cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const VW=1000,VH=560,GROUND=480;let S=1,OX=0,OY=0;
+function fit(){const r=stage.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);cv.width=r.width*d;cv.height=r.height*d;S=Math.min(r.width/VW,r.height/VH);OX=(r.width-VW*S)/2;OY=(r.height-VH*S)/2;ctx.setTransform(d*S,0,0,d*S,d*OX,d*OY);}
+new ResizeObserver(fit).observe(stage);fit();
+
+const ROBOS=[
+ {name:'あかボルト',col:'#E8342E',dark:'#A8201C',spd:5.2,pow:1,sub:'バランス'},
+ {name:'あおジェット',col:'#2F7BF0',dark:'#1C4FA8',spd:6.8,pow:.82,sub:'はやい'},
+ {name:'きいろタンク',col:'#F2B705',dark:'#B08400',spd:3.9,pow:1.3,sub:'つよい'}];
+const MOVES={punch:{dur:18,a:6,b:10,range:100,dmg:6,kb:5,h:-110},kick:{dur:28,a:10,b:16,range:130,dmg:10,kb:10,h:-60}};
+let P,C,shots=[],parts=[],shake=0,state='menu',stT=0,round=1,clock=60,keys={},cpuLv=1,aiT=0,frameAcc=0,ko=null;
+
+function mk(robo,x,face){return{r:robo,x,y:GROUND,vx:0,vy:0,face,hp:100,en:0,st:'idle',t:0,mv:null,hitDone:false,stun:0,guard:false,wins:0,walk:0,flash:0};}
+const onGround=f=>f.y>=GROUND;
+function act(f,cmd){
+  if(state!=='fight'||f.stun>0||f.mv)return;
+  if(cmd==='punch'||cmd==='kick'){f.mv={...MOVES[cmd],k:cmd,t:0};f.hitDone=false;f.guard=false;Kids.tone(cmd==='punch'?300:220,.06,'square',.03);}
+  else if(cmd==='jump'&&onGround(f)){f.vy=-17;Kids.tone(500,.08,'sine',.05,0,1.6);}
+  else if(cmd==='beam'&&f.en>=100){f.en=0;f.mv={k:'beam',dur:24,t:0};shots.push({x:f.x+f.face*70,y:f.y-120,vx:f.face*13,o:f,life:120});Kids.tone(880,.35,'sawtooth',.04,0,.4);if(f===P)Kids.say('ビーム！');}
+}
+function damage(def,att,dmg,kb,hx,hy){
+  const g=def.guard&&onGround(def)&&def.face===-Math.sign(def.x-att.x||1)*-1;
+  // ガードは あいての ほうを むいていれば きく
+  const facing=Math.sign(att.x-def.x)===def.face;
+  const guarded=def.guard&&onGround(def)&&facing;
+  const d=Math.round(dmg*att.r.pow*(guarded?.15:1));
+  def.hp=Math.max(0,def.hp-d);def.vx=Math.sign(def.x-att.x||1)*kb*(guarded?.4:1);
+  if(!guarded){def.stun=16;def.mv=null;def.flash=8;shake=6;att.en=Math.min(100,att.en+9);def.en=Math.min(100,def.en+5);burst(hx,hy,12,['#FFD23F','#fff','#FF8A65']);Kids.tone(140+Math.random()*60,.1,'square',.07);}
+  else{burst(hx,hy,6,['#4FC3F7','#fff']);Kids.tone(900,.05,'triangle',.05);}
+  if(def.hp<=0)koNow(att,def);
+}
+function burst(x,y,n,cols){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=3+Math.random()*6;parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:1,c:cols[i%cols.length],star:Math.random()<.5});}}
+function koNow(w,l){state='ko';stT=0;ko={w,l};l.st='down';w.wins++;Kids.yay(w===P);call(w===P?'かち！':'まけ…');}
+function call(t,ms=1200){const el=document.getElementById('call');el.textContent=t;el.hidden=false;clearTimeout(call.t);call.t=setTimeout(()=>el.hidden=true,ms);}
+function updFighter(f,o){
+  if(f.stun>0)f.stun--;if(f.flash>0)f.flash--;
+  const ctrl=state==='fight'&&f.stun<=0;
+  if(ctrl&&!f.mv){
+    const want=f===P?((keys.R?1:0)-(keys.L?1:0)):f.ai||0;
+    f.guard=f===P?!!keys.G:!!f.aiGuard;
+    if(onGround(f)){f.vx=f.guard?0:want*f.r.spd;}else f.vx+=want*.3;
+    if(want&&onGround(f))f.walk+=.25;
+    f.face=o.x>f.x?1:-1;
+  }else if(onGround(f))f.vx*=.8;
+  if(f.mv){f.mv.t++;const m=f.mv;
+    if(m.range&&!f.hitDone&&m.t>=m.a&&m.t<=m.b){const dx=(o.x-f.x)*f.face;if(dx>0&&dx<m.range&&Math.abs(o.y-f.y)<100&&o.st!=='down'){f.hitDone=true;damage(o,f,m.dmg,m.kb,f.x+f.face*(m.range-20),f.y+m.h);}}
+    if(m.t>=m.dur)f.mv=null;}
+  f.vy+=.9;f.x+=f.vx;f.y+=f.vy;if(f.y>=GROUND){f.y=GROUND;f.vy=0;}
+  f.x=Math.max(60,Math.min(VW-60,f.x));
+}
+function ai(f,o){
+  if(state!=='fight')return;
+  if(--aiT>0)return;aiT=[26,16,9][cpuLv]+Math.floor(Math.random()*8);
+  const d=Math.abs(o.x-f.x),dir=Math.sign(o.x-f.x);f.aiGuard=false;
+  if(o.mv&&o.mv.range&&d<150&&Math.random()<[.15,.45,.75][cpuLv]){f.aiGuard=true;f.ai=0;return;}
+  if(f.en>=100&&d>220&&Math.random()<.7){act(f,'beam');return;}
+  if(shots.some(s=>s.o!==f&&Math.abs(s.x-f.x)<260)&&Math.random()<[.2,.5,.8][cpuLv]){if(Math.random()<.5)act(f,'jump');else{f.aiGuard=true;f.ai=0;}return;}
+  if(d<125&&Math.random()<[.45,.65,.85][cpuLv]){f.ai=0;act(f,Math.random()<.55?'punch':'kick');return;}
+  if(d>110){f.ai=dir;if(Math.random()<.08)act(f,'jump');}else f.ai=Math.random()<.3?-dir:0;
+}
+function step(){
+  if(state==='fight'||state==='ko'){
+    ai(C,P);updFighter(P,C);updFighter(C,P);
+    const gap=C.x-P.x;if(Math.abs(gap)<70&&Math.abs(P.y-C.y)<120){const push=(70-Math.abs(gap))/2*Math.sign(gap||1);P.x-=push;C.x+=push;}
+    shots.forEach(s=>{s.x+=s.vx;s.life--;const t=s.o===P?C:P;if(Math.abs(s.x-t.x)<50&&t.y-150<s.y&&s.y<t.y&&t.st!=='down'&&state==='fight'){s.life=0;damage(t,s.o,18,14,s.x,s.y);}});
+    shots=shots.filter(s=>s.life>0&&s.x>-50&&s.x<VW+50);
+    if(state==='fight'){frameAcc++;if(frameAcc>=60){frameAcc=0;clock--;if(clock<=0){clock=0;const w=P.hp>=C.hp?P:C;koNow(w,w===P?C:P);call('じかん ぎれ');}}}
+    if(state==='ko'){stT++;if(stT>150)nextRound();}
+  }
+  parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.25;p.l-=.03;});parts=parts.filter(p=>p.l>0);
+  if(shake>0)shake--;hud();
+}
+function nextRound(){
+  if(P.wins>=2||C.wins>=2){state='end';const win=P.wins>=2;if(win){Kids.yay();Kids.say('ゆうしょう！');}
+    const o=document.getElementById('ov');o.hidden=false;o.innerHTML=`<p class="msg">${win?'ゆうしょう！':'ざんねん…'}</p><p class="sub">${P.wins} たい ${C.wins}</p><div class="choices"><button class="big" id="again">もういちど</button><button class="big gray" id="change">ロボを かえる</button></div>`;
+    document.getElementById('again').onclick=()=>begin(P.r,cpuLv);document.getElementById('change').onclick=menu;return;}
+  round++;startRound();
+}
+function startRound(){const pw=P.wins,cw=C.wins;P=Object.assign(mk(P.r,260,1),{wins:pw});C=Object.assign(mk(C.r,740,-1),{wins:cw});shots=[];clock=60;frameAcc=0;
+  state='ready';call('ラウンド '+round,1100);Kids.say('ラウンド '+round);setTimeout(()=>{state='fight';call('ファイト！',700);Kids.tone(660,.2,'triangle',.08);},1300);}
+function begin(robo,lv){cpuLv=lv;const others=ROBOS.filter(r=>r!==robo);P=mk(robo,260,1);C=mk(others[Math.floor(Math.random()*others.length)],740,-1);round=1;
+  document.getElementById('n1').textContent=robo.name;document.getElementById('n2').textContent=C.r.name;document.getElementById('ov').hidden=true;startRound();}
+let chosen=null;
+function menu(){state='menu';const o=document.getElementById('ov');o.hidden=false;
+  o.innerHTML='<p class="msg">ロボを えらんでね</p><div class="choices" id="pick"></div><p class="sub">キーボード：← → いどう・↑ ジャンプ・J パンチ・K キック・L ガード・I ビーム</p><p class="sub tate">スマホは よこむきが おすすめ</p>';
+  const box=document.getElementById('pick');
+  ROBOS.forEach(r=>{const b=document.createElement('button');b.className='choice';const c=document.createElement('canvas');c.className='robo';c.width=240;c.height=240;
+    const x=c.getContext('2d');x.scale(.42,.42);x.translate(285,520);drawRobo(x,{r,x:0,y:0,face:1,st:'idle',mv:null,walk:0,flash:0,guard:false,stun:0},true);
+    b.append(c);b.insertAdjacentHTML('beforeend',`<span>${r.name}</span><small>${r.sub}</small>`);b.onclick=()=>{chosen=r;Kids.blip();Kids.say(r.name);level();};box.appendChild(b);});}
+function level(){const o=document.getElementById('ov');o.innerHTML='<p class="msg">あいての つよさ</p><div class="choices" id="pick"></div>';
+  [['よわい','はじめて'],['ふつう','なれてきた'],['つよい','うでじまん']].forEach(([n,s],i)=>{const b=document.createElement('button');b.className='choice';b.innerHTML=`${'★'.repeat(i+1)}<span>${n}</span><small>${s}</small>`;b.onclick=()=>begin(chosen,i);document.getElementById('pick').appendChild(b);});}
+function hud(){if(!P)return;
+  document.getElementById('h1').style.width=P.hp+'%';document.getElementById('h2').style.width=C.hp+'%';
+  document.getElementById('e1').style.width=P.en+'%';document.getElementById('e2').style.width=C.en+'%';
+  document.getElementById('e1w').classList.toggle('full',P.en>=100);document.getElementById('e2w').classList.toggle('full',C.en>=100);
+  document.getElementById('bB').classList.toggle('ready',P.en>=100);
+  document.getElementById('clock').textContent=clock;
+  document.getElementById('w1').textContent='★'.repeat(P.wins);document.getElementById('w2').textContent='★'.repeat(C.wins);}
+function rr(x,a,b,w,h,r){x.beginPath();x.roundRect(a,b,w,h,r);x.fill();}
+function drawRobo(x,f,preview=false){
+  const r=f.r,t=performance.now()/1000;x.save();x.translate(f.x,f.y);
+  if(f.st==='down'){x.rotate(-f.face*Math.PI/2*.92);x.translate(0,-10);}
+  x.scale(f.face,1);
+  const body=f.flash>0&&f.flash%2?'#fff':r.col,dark=f.flash>0&&f.flash%2?'#ddd':r.dark;
+  const bob=f.st==='down'?0:Math.sin(t*4)*2;
+  const m=f.mv,ph=m?Math.min(1,m.t/(m.a||6)):0,ext=m&&m.range?(m.t<=m.b?ph:Math.max(0,1-(m.t-m.b)/8)):0;
+  const sw=Math.sin(f.walk)*14;
+  // うしろの あし
+  x.fillStyle=dark;x.save();x.translate(-14,-70);x.rotate(-sw*.02);rr(x,-12,0,24,70,8);x.restore();
+  // うしろの うで
+  x.save();x.translate(-26,-150+bob);x.rotate(.3);rr(x,-10,0,20,56,9);x.restore();
+  // まえの あし（キック）
+  x.save();x.translate(14,-70);const kick=m&&m.k==='kick'?ext:0;x.rotate(sw*.02-kick*1.45);x.fillStyle=body;rr(x,-13,0,26,70,9);x.fillStyle='#1F2A44';rr(x,-14,58,34,14,6);x.restore();
+  // からだ
+  x.fillStyle=body;rr(x,-42,-170+bob,84,104,22);x.fillStyle='rgba(255,255,255,.25)';rr(x,-30,-160+bob,26,60,12);
+  x.fillStyle='#1F2A44';rr(x,-20,-130+bob,40,28,8);x.fillStyle=f.en>=100&&!preview?'#FFD23F':'#4FC3F7';x.beginPath();x.arc(0,-116+bob,8+Math.sin(t*6)*2,0,7);x.fill();
+  // あたま
+  x.fillStyle=body;rr(x,-32,-222+bob,64,52,18);x.fillStyle='#1F2A44';rr(x,-24,-208+bob,52,22,10);
+  x.fillStyle=f.stun>0?'#FF6B6B':'#7EF0FF';x.beginPath();x.arc(4,-197+bob,5,0,7);x.arc(18,-197+bob,5,0,7);x.fill();
+  x.strokeStyle=dark;x.lineWidth=5;x.beginPath();x.moveTo(0,-222+bob);x.lineTo(0,-240+bob);x.stroke();x.fillStyle='#FFD23F';x.beginPath();x.arc(0,-244+bob,7,0,7);x.fill();
+  // まえの うで（パンチ・ガード・ビーム）
+  x.save();x.translate(26,-150+bob);
+  if(f.guard&&!m){x.rotate(-1.2);x.fillStyle=body;rr(x,-10,0,20,52,9);x.restore();x.fillStyle='rgba(79,195,247,.35)';x.strokeStyle='#4FC3F7';x.lineWidth=4;x.beginPath();x.ellipse(52,-120,22,62,0,0,7);x.fill();x.stroke();}
+  else{const punch=m&&m.k==='punch'?ext:0,beam=m&&m.k==='beam';x.rotate(beam?-1.57:(.35-punch*1.9));x.fillStyle=body;rr(x,-10,0,20,56+punch*36,9);
+    x.fillStyle='#1F2A44';x.beginPath();x.arc(0,60+punch*36,15,0,7);x.fill();x.restore();}
+  x.restore();
+}
+function draw(){
+  const d=Math.min(devicePixelRatio||1,2);ctx.save();ctx.setTransform(d,0,0,d,0,0);ctx.fillStyle='#232046';ctx.fillRect(0,0,cv.width,cv.height);ctx.restore();
+  ctx.save();if(shake)ctx.translate((Math.random()-.5)*shake*2,(Math.random()-.5)*shake*2);
+  // はいけい：よるの まち
+  const g=ctx.createLinearGradient(0,0,0,GROUND);g.addColorStop(0,'#2B2A6B');g.addColorStop(1,'#6B4BA8');ctx.fillStyle=g;ctx.fillRect(0,0,VW,GROUND);
+  ctx.fillStyle='rgba(255,255,255,.7)';for(let i=0;i<30;i++){ctx.fillRect((i*137)%VW,(i*71)%200,2,2);}
+  ctx.fillStyle='#3E2F7A';[[40,180],[130,240],[230,150],[700,220],[800,160],[900,260]].forEach(([x,h])=>ctx.fillRect(x,GROUND-h,80,h));
+  ctx.fillStyle='#FFD23F';[[50,200],[150,260],[720,240],[910,280]].forEach(([x,h])=>{for(let k=0;k<4;k++)ctx.fillRect(x+10+(k%2)*30,GROUND-h+30+Math.floor(k/2)*40,14,14);});
+  ctx.fillStyle='#4A3B8C';ctx.fillRect(0,GROUND,VW,VH-GROUND);ctx.fillStyle='#5B4BA0';for(let x=0;x<VW;x+=80)ctx.fillRect(x,GROUND,40,8);
+  ctx.strokeStyle='#FFC83D';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(0,GROUND);ctx.lineTo(VW,GROUND);ctx.stroke();
+  if(P){[P,C].forEach(f=>{ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(f.x,GROUND+6,50*(1-(GROUND-f.y)/400),10,0,0,7);ctx.fill();});
+    drawRobo(ctx,C);drawRobo(ctx,P);
+    ctx.fillStyle='#FFD23F';ctx.font="800 22px 'M PLUS Rounded 1c',sans-serif";ctx.textAlign='center';ctx.fillText('あなた',P.x,P.y-262);}
+  shots.forEach(s=>{const gr=ctx.createRadialGradient(s.x,s.y,4,s.x,s.y,34);gr.addColorStop(0,'#fff');gr.addColorStop(.4,'#7EF0FF');gr.addColorStop(1,'rgba(79,195,247,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(s.x,s.y,34,0,7);ctx.fill();});
+  parts.forEach(p=>{ctx.globalAlpha=p.l;ctx.fillStyle=p.c;ctx.beginPath();if(p.star){for(let i=0;i<10;i++){const a=i*Math.PI/5,r=i%2?3:8;ctx.lineTo(p.x+Math.cos(a)*r,p.y+Math.sin(a)*r);}}else ctx.arc(p.x,p.y,4,0,7);ctx.fill();});
+  ctx.globalAlpha=1;ctx.restore();
+}
+let last=performance.now(),acc=0;
+function loop(t){acc+=Math.min(100,t-last);last=t;while(acc>=1000/60){step();acc-=1000/60;}draw();requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+Kids.hold(document.getElementById('bL'),()=>keys.L=true,{onUp:()=>keys.L=false});
+Kids.hold(document.getElementById('bR'),()=>keys.R=true,{onUp:()=>keys.R=false});
+Kids.hold(document.getElementById('bG'),()=>keys.G=true,{onUp:()=>keys.G=false});
+Kids.hold(document.getElementById('bU'),()=>act(P,'jump'));
+Kids.hold(document.getElementById('bP'),()=>act(P,'punch'));
+Kids.hold(document.getElementById('bK'),()=>act(P,'kick'));
+Kids.hold(document.getElementById('bB'),()=>act(P,'beam'));
+const KM={ArrowLeft:'L',a:'L',ArrowRight:'R',d:'R',l:'G'};
+addEventListener('keydown',e=>{const k=e.key;if(KM[k]){keys[KM[k]]=true;e.preventDefault();}
+  if(!P||e.repeat)return;if(k==='ArrowUp'||k==='w'){e.preventDefault();act(P,'jump');}if(k==='j')act(P,'punch');if(k==='k')act(P,'kick');if(k==='i'||k==='u')act(P,'beam');});
+addEventListener('keyup',e=>{if(KM[e.key])keys[KM[e.key]]=false;});
+menu();
+</script>
+</body>
+</html>
