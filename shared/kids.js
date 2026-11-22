@@ -51,7 +51,7 @@ window.Kids=(()=>{
 
   // 合言葉（一度入れたら、この端末では次から聞かない）
   (function gate(){
-    const KEY='papatto-asobi-ok',HASH='5d34005f';
+    const KEY='papatto-asobi-ok',HASH='c50a675';
     const fnv=s=>{let h=2166136261;for(const ch of s){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)>>>0;}return h.toString(16);};
     let ok=false;try{ok=localStorage.getItem(KEY)===HASH;}catch(e){}
     try{ok=ok||sessionStorage.getItem(KEY)===HASH;}catch(e){}
@@ -60,12 +60,21 @@ window.Kids=(()=>{
     st.textContent='.gate{position:fixed;inset:0;z-index:100;background:var(--frame,#3B6FE0);display:flex;align-items:center;justify-content:center;padding:16px}.gate form{background:#fff;border-radius:24px;padding:26px 22px;width:min(100%,360px);box-sizing:border-box;display:flex;flex-direction:column;gap:14px;text-align:center;box-shadow:0 6px 0 #2A55B8}.gate h2{margin:0;font-size:24px}.gate p{margin:0;color:#6B7590;font-weight:500;font-size:14px}.gate input{font:inherit;font-size:22px;text-align:center;padding:12px;border:3px solid #EEF3FF;border-radius:14px;outline:none}.gate input:focus{border-color:#FFC83D}.gate .err{color:#E8342E;font-weight:800;min-height:1.2em}';
     document.head.appendChild(st);
     const g=document.createElement('div');g.className='gate';
-    g.innerHTML='<form autocomplete="off"><h2>あいことば</h2><p>おうちの ひとに いれてもらってね</p><input id="gatePw" type="password" inputmode="text" autocapitalize="off" aria-label="あいことば"><div class="err" id="gateErr"></div><button class="big" type="submit">はいる</button></form>';
+    g.innerHTML='<form autocomplete="off"><h2>あいことば</h2><p>おうちの ひとに いれてもらってね</p><input id="gatePw" type="text" inputmode="text" autocapitalize="off" aria-label="あいことば"><div class="err" id="gateErr"></div><button class="big" type="submit">はいる</button></form>';
     const mount=()=>{document.body.appendChild(g);setTimeout(()=>g.querySelector('input').focus(),50);};
     document.body?mount():addEventListener('DOMContentLoaded',mount);
-    g.querySelector('form').addEventListener('submit',e=>{e.preventDefault();const v=g.querySelector('input').value.trim().toLowerCase();
+    g.querySelector('form').addEventListener('submit',e=>{e.preventDefault();const v=g.querySelector('input').value.trim().normalize('NFKC').replace(/[\u30a1-\u30f6]/g,ch=>String.fromCharCode(ch.charCodeAt(0)-0x60));
       if(fnv(v)===HASH){try{localStorage.setItem(KEY,HASH);}catch(_){}try{sessionStorage.setItem(KEY,HASH);}catch(_){}g.remove();blip(800);}
       else{g.querySelector('#gateErr').textContent='ちがうみたい';shake(g.querySelector('form'));g.querySelector('input').select();}});
   })();
-  return{tone,blip,pop,yay,oops,say,confetti,shuffle,shake,icon,homeIcon,ICONS:Object.keys(I).filter(k=>k!=='house')};
+  // おしている間ずっと（repeat=ミリ秒でくり返し）。離したら onUp
+  function hold(btn,onDown,opt={}){
+    let t1,t2,on=false;
+    const stop=()=>{if(!on)return;on=false;btn.classList.remove('on');clearTimeout(t1);clearInterval(t2);opt.onUp&&opt.onUp();};
+    btn.addEventListener('pointerdown',e=>{e.preventDefault();try{btn.setPointerCapture(e.pointerId);}catch(_){}on=true;btn.classList.add('on');onDown();
+      if(opt.repeat){t1=setTimeout(()=>{t2=setInterval(onDown,opt.repeat);},opt.delay||170);}});
+    ['pointerup','pointercancel','lostpointercapture'].forEach(n=>btn.addEventListener(n,stop));
+    btn.addEventListener('contextmenu',e=>e.preventDefault());
+  }
+  return{hold,tone,blip,pop,yay,oops,say,confetti,shuffle,shake,icon,homeIcon,ICONS:Object.keys(I).filter(k=>k!=='house')};
 })();
