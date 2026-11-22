@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>もっきん｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css">
+<style>
+.board{background:#E7F6DA;display:grid;grid-template-rows:auto 1fr;touch-action:none}
+.songs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:14px 14px 0}
+.song{border:3px solid transparent;background:#fff;border-radius:16px;padding:8px 14px;font-size:16px;box-shadow:0 4px 0 rgba(0,0,0,.12);display:flex;align-items:center;gap:6px}
+.song svg{width:26px;height:26px}
+.song.on{border-color:var(--ink);background:var(--accent)}
+.keys{display:flex;align-items:center;justify-content:center;gap:clamp(4px,1.2vw,12px);padding:16px;min-height:0}
+.key{flex:1;max-width:110px;border:0;border-radius:16px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;font-size:clamp(16px,2.6vw,26px);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25);box-shadow:0 6px 0 rgba(0,0,0,.22),inset 0 -8px 0 rgba(0,0,0,.08);position:relative;transition:transform .06s}
+.key::before,.key::after{content:"";position:absolute;left:50%;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:rgba(255,255,255,.7)}
+.key::before{top:10px}.key::after{bottom:46px}
+.key.hit{transform:translateY(5px) scale(.97);box-shadow:0 1px 0 rgba(0,0,0,.22)}
+.key.next{outline:6px solid #fff;outline-offset:3px;animation:glow .8s infinite alternate}
+@keyframes glow{from{outline-color:#fff}to{outline-color:#FFC83D}}
+.done{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:18px;color:var(--ink);pointer-events:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a>
+    <h1 class="title">もっきん</h1>
+  </div>
+  <div class="board">
+    <div class="songs" id="songs"></div>
+    <div class="keys" id="keys"></div>
+  </div>
+</div>
+<script src="../shared/kids.js"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const NOTES=[['ど',523.25,'#E8342E'],['れ',587.33,'#F7931E'],['み',659.25,'#F2C200'],['ふぁ',698.46,'#8BC34A'],['そ',783.99,'#2E9E4F'],['ら',880,'#4FC3F7'],['し',987.77,'#2563C9'],['ど',1046.5,'#8E44AD']];
+// きょく（どれも昔からの童謡）
+const SONGS=[
+ {name:'じゆうに',icon:'heart',seq:null},
+ {name:'きらきらぼし',icon:'star',seq:[0,0,4,4,5,5,4,3,3,2,2,1,1,0,4,4,3,3,2,2,1,4,4,3,3,2,2,1,0,0,4,4,5,5,4,3,3,2,2,1,1,0]},
+ {name:'かえるのうた',icon:'balloon',seq:[0,1,2,3,2,1,0,2,3,4,5,4,3,2,0,0,0,0,0,1,2,3,2,1,0]},
+ {name:'ちょうちょう',icon:'flower',seq:[4,2,2,3,1,1,0,1,2,3,4,4,4,4,2,2,3,1,1,0,2,4,4,2,2,2]}
+];
+let song=0,pos=0;
+const keysEl=document.getElementById('keys');
+const keys=NOTES.map(([name,f,col],i)=>{
+  const b=document.createElement('button');b.className='key';b.type='button';b.textContent=name;b.style.background=col;b.style.height=(92-i*6)+'%';b.dataset.i=i;
+  b.setAttribute('aria-label',name);keysEl.appendChild(b);return b;
+});
+function ring(f){ // もっきんっぽい音
+  Kids.tone(f,.5,'sine',.16);Kids.tone(f*4,.08,'sine',.03);Kids.tone(f*2.01,.25,'triangle',.03);
+}
+function play(i){
+  const k=keys[i];ring(NOTES[i][1]);k.classList.add('hit');setTimeout(()=>k.classList.remove('hit'),110);
+  const s=SONGS[song].seq;
+  if(s){
+    if(i===s[pos]){pos++;if(pos>=s.length){Kids.yay();Kids.say('じょうずに ひけたね！');pos=0;}}
+    mark();
+  }
+}
+function mark(){keys.forEach(k=>k.classList.remove('next'));const s=SONGS[song].seq;if(s)keys[s[pos]].classList.add('next');}
+// ゆびを すべらせても なる
+let down=false,lastKey=-1;
+keysEl.addEventListener('pointerdown',e=>{down=true;const k=e.target.closest('.key');if(k){lastKey=+k.dataset.i;play(lastKey);}try{keysEl.releasePointerCapture(e.pointerId);}catch(_){}});
+keysEl.addEventListener('pointermove',e=>{if(!down)return;const el=document.elementFromPoint(e.clientX,e.clientY);const k=el&&el.closest&&el.closest('.key');if(k&&+k.dataset.i!==lastKey){lastKey=+k.dataset.i;play(lastKey);}});
+addEventListener('pointerup',()=>{down=false;lastKey=-1;});
+addEventListener('pointercancel',()=>{down=false;lastKey=-1;});
+const songsEl=document.getElementById('songs');
+SONGS.forEach((s,i)=>{const b=document.createElement('button');b.className='song';b.type='button';b.innerHTML=Kids.icon(s.icon)+s.name;
+  b.onclick=()=>{song=i;pos=0;[...songsEl.children].forEach((c,j)=>c.classList.toggle('on',j===i));mark();Kids.blip();
+    if(s.seq){Kids.say(s.name+'。ひかる ところを たたいてね');}};songsEl.appendChild(b);});
+songsEl.children[0].classList.add('on');
+</script>
+</body>
+</html>

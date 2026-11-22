@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>いくつ かな｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css">
+<style>
+.board{background:#FFF6C7;display:grid;grid-template-rows:auto 1fr auto;gap:10px;padding:14px;box-sizing:border-box}
+.q{margin:0;text-align:center;font-size:clamp(20px,3.4vw,30px)}
+.items{display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:clamp(6px,1.5vw,16px);min-height:0;overflow:hidden}
+.it{width:clamp(54px,11vw,104px);aspect-ratio:1;border:0;padding:0;background:none;position:relative;animation:popin .35s backwards}
+.it svg{width:100%;height:100%}
+.it b{position:absolute;right:-4px;top:-4px;background:var(--ink);color:#fff;border-radius:999px;min-width:30px;height:30px;font-size:17px;display:flex;align-items:center;justify-content:center;animation:popin .2s}
+.ans{display:flex;justify-content:center;gap:clamp(10px,3vw,24px);flex-wrap:wrap}
+.num{width:clamp(76px,16vw,120px);aspect-ratio:1;border:0;border-radius:24px;font-size:clamp(38px,7vw,60px);color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.2);font-variant-numeric:tabular-nums}
+.num:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.2)}
+.stars{display:flex;gap:4px}
+.stars svg{width:28px;height:28px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a>
+    <h1 class="title">いくつ かな</h1>
+    <button class="hbtn" id="lv"><span id="lvl">1〜5</span></button>
+    <div class="score"><span class="stars" id="stars"></span></div>
+  </div>
+  <div class="board" id="board">
+    <p class="q" id="q"></p>
+    <div class="items" id="items"></div>
+    <div class="ans" id="ans"></div>
+  </div>
+</div>
+<script src="../shared/kids.js"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const YOMI=['','いち','に','さん','よん','ご','ろく','なな','はち','きゅう','じゅう'];
+const NAME={apple:'りんご',star:'ほし',heart:'ハート',fish:'さかな',flower:'おはな',sun:'おひさま',car:'くるま',cat:'ねこ',banana:'バナナ',balloon:'ふうせん'};
+const BTN=['#E8342E','#2563C9','#2E9E4F','#8E44AD'];
+let max=5,ans=0,counted=0,streak=0,busy=false;
+function q(){
+  busy=false;counted=0;ans=1+Math.floor(Math.random()*max);
+  const k=Kids.ICONS[Math.floor(Math.random()*Kids.ICONS.length)];
+  document.getElementById('q').textContent=`${NAME[k]}は いくつ かな？`;
+  const box=document.getElementById('items');box.innerHTML='';
+  for(let i=0;i<ans;i++){const b=document.createElement('button');b.className='it';b.type='button';b.style.animationDelay=i*.06+'s';b.innerHTML=Kids.icon(k);b.setAttribute('aria-label',NAME[k]);
+    b.onclick=()=>{if(b.querySelector('b'))return;counted++;const t=document.createElement('b');t.textContent=counted;b.appendChild(t);Kids.tone(440+counted*60,.12,'triangle',.07);Kids.say(YOMI[counted]);};box.appendChild(b);}
+  const set=new Set([ans]);while(set.size<3){const v=Math.max(1,Math.min(max,ans+Math.floor(Math.random()*5)-2));set.add(v);if(max<3)break;}
+  const a=document.getElementById('ans');a.innerHTML='';
+  Kids.shuffle([...set]).forEach((v,i)=>{const b=document.createElement('button');b.className='num';b.type='button';b.textContent=v;b.style.background=BTN[i];
+    b.onclick=()=>pick(b,v);a.appendChild(b);});
+  Kids.say(`${NAME[k]}は いくつ かな？`);
+}
+function pick(b,v){
+  if(busy)return;
+  if(v===ans){busy=true;streak++;Kids.yay(streak%5===0);Kids.say(`せいかい！ ${YOMI[ans]}`);draw();b.style.transform='scale(1.15)';setTimeout(q,1500);}
+  else{Kids.oops();Kids.shake(b);Kids.say('かぞえて みよう');}
+}
+function draw(){document.getElementById('stars').innerHTML=Kids.icon('star').repeat(streak%5||(streak?5:0))||'<span style="font-size:15px;color:#6B7590">ほしを あつめよう</span>';}
+document.getElementById('lv').onclick=()=>{max=max===5?10:5;document.getElementById('lvl').textContent=max===5?'1〜5':'1〜10';Kids.blip();q();};
+draw();q();
+</script>
+</body>
+</html>

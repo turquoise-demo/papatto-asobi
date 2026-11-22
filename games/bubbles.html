@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>しゃぼんだま｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css">
+<style>
+.board{background:linear-gradient(#BFE6FF,#E8F7FF 70%,#D9F2C4 70%,#C3E8A6);touch-action:none}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a>
+    <h1 class="title">しゃぼんだま</h1>
+    <div class="score" aria-live="polite"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#4FC3F7" opacity=".6" stroke="#2563C9" stroke-width="6"/><circle cx="36" cy="36" r="9" fill="#fff"/></svg><span id="n">0</span></div>
+  </div>
+  <div class="board" id="board"><canvas id="cv"></canvas></div>
+</div>
+<script src="../shared/kids.js"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const board=document.getElementById('board'),cv=document.getElementById('cv'),c=cv.getContext('2d');
+const DPR=Math.min(devicePixelRatio||1,2);let W,H;
+function fit(){const r=board.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;c.setTransform(DPR,0,0,DPR,0,0);}
+new ResizeObserver(fit).observe(board);fit();
+const COLS=['#4FC3F7','#F78FB3','#FFD23F','#8BC34A','#B39DDB','#FF8A65'];
+let bubbles=[],parts=[],count=0,t=0;
+function spawn(){
+  const r=26+Math.random()*Math.min(46,W*.08),star=Math.random()<.08;
+  bubbles.push({x:r+Math.random()*(W-2*r),y:H+r,r,vy:.6+Math.random()*.9,ph:Math.random()*6,col:star?'#FFD23F':COLS[Math.floor(Math.random()*COLS.length)],star});
+}
+function burst(b){
+  const n=b.star?40:16;
+  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=2+Math.random()*(b.star?7:4);parts.push({x:b.x,y:b.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,col:b.star?COLS[i%COLS.length]:b.col,r:b.star?5:3+Math.random()*3});}
+}
+function hit(x,y){
+  for(let i=bubbles.length-1;i>=0;i--){const b=bubbles[i];if((x-b.x)**2+(y-b.y)**2<(b.r+12)**2){
+    bubbles.splice(i,1);burst(b);count++;document.getElementById('n').textContent=count;
+    if(b.star){Kids.yay(false);}else{Kids.tone(900-b.r*8,.06,'sine',.09,0,2.2);}
+    if(count%20===0){Kids.yay();Kids.say(count+'こ');}
+    return;}}
+}
+board.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect();hit(e.clientX-r.left,e.clientY-r.top);});
+function star(x,y,r){c.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;c.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);}c.closePath();}
+function frame(){
+  t++;c.clearRect(0,0,W,H);
+  if(bubbles.length<Math.max(6,W/90)&&Math.random()<.06)spawn();
+  bubbles.forEach(b=>{b.y-=b.vy;b.ph+=.03;const x=b.x+Math.sin(b.ph)*10;b.dx=x;
+    const g=c.createRadialGradient(x-b.r*.3,b.y-b.r*.3,b.r*.1,x,b.y,b.r);g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(.5,b.col+'55');g.addColorStop(1,b.col+'CC');
+    c.fillStyle=g;c.beginPath();c.arc(x,b.y,b.r,0,7);c.fill();c.lineWidth=3;c.strokeStyle=b.col;c.stroke();
+    if(b.star){c.fillStyle='#fff';star(x,b.y,b.r*.55);c.fill();c.strokeStyle='#E0A800';c.lineWidth=2;c.stroke();}
+    c.fillStyle='rgba(255,255,255,.85)';c.beginPath();c.ellipse(x-b.r*.38,b.y-b.r*.4,b.r*.16,b.r*.1,-.7,0,7);c.fill();
+  });
+  bubbles.forEach(b=>b.x=b.x);
+  bubbles=bubbles.filter(b=>b.y>-b.r*2);
+  parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.12;p.life-=.025;c.globalAlpha=Math.max(0,p.life);c.fillStyle=p.col;c.beginPath();c.arc(p.x,p.y,p.r,0,7);c.fill();});
+  c.globalAlpha=1;parts=parts.filter(p=>p.life>0);
+  requestAnimationFrame(frame);
+}
+// 当たり判定はゆれた位置で
+const _hit=hit;hit=(x,y)=>{bubbles.forEach(b=>{if(b.dx!==undefined)b._x=b.x,b.x=b.dx;});_hit(x,y);bubbles.forEach(b=>{if(b._x!==undefined){b.x=b._x;delete b._x;}});};
+for(let i=0;i<6;i++){spawn();bubbles[i].y=H*.3+Math.random()*H*.6;}
+frame();
+</script>
+</body>
+</html>

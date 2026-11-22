@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>かたち パズル｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css">
+<style>
+.board{background:#EDE4FA;touch-action:none}
+svg#sv{position:absolute;inset:0;width:100%;height:100%}
+.piece{cursor:grab}
+.piece.drag{cursor:grabbing}
+.hole{fill:#fff;stroke:#9AA3B8;stroke-width:5;stroke-dasharray:12 9}
+.tray{fill:#DCCFF3}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a>
+    <h1 class="title">かたち パズル</h1>
+    <div class="score"><svg viewBox="0 0 100 100"><polygon points="50,7 61,37 93,38 68,58 77,90 50,71 23,90 32,58 7,38 39,37" fill="#FFD23F" stroke="#E0A800" stroke-width="5"/></svg><span id="n">0</span></div>
+  </div>
+  <div class="board" id="board"><svg id="sv"></svg></div>
+</div>
+<script src="../shared/kids.js"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const sv=document.getElementById('sv'),board=document.getElementById('board'),NS='http://www.w3.org/2000/svg';
+// かたち（中心0,0・はば約100）
+const SH={
+ まる:'<circle r="48"/>',
+ しかく:'<rect x="-44" y="-44" width="88" height="88" rx="6"/>',
+ さんかく:'<polygon points="0,-50 50,40 -50,40"/>',
+ ほし:'<polygon points="0,-52 13,-17 50,-16 21,7 31,43 0,22 -31,43 -21,7 -50,-16 -13,-17"/>',
+ ハート:'<path d="M0 44C-44 14 -50 -14 -32 -32 -18 -44 -4 -36 0 -24 4 -36 18 -44 32 -32 50 -14 44 14 0 44z"/>',
+ ひしがた:'<polygon points="0,-52 40,0 0,52 -40,0"/>',
+ たまご:'<ellipse rx="36" ry="50"/>',
+ つき:'<path d="M14 -48A50 50 0 1 0 14 48A38 38 0 1 1 14 -48z"/>'
+};
+const COLS=['#E8342E','#2563C9','#F2C200','#2E9E4F','#8E44AD','#F7931E','#F78FB3','#4FC3F7'];
+let W,H,score=0,holes=[],pieces=[],left=0,unit=1;
+function el(tag,attrs,html){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(html)e.innerHTML=html;return e;}
+function round(){
+  const r=board.getBoundingClientRect();W=r.width;H=r.height;sv.setAttribute('viewBox',`0 0 ${W} ${H}`);sv.innerHTML='';
+  const n=W<520?3:4;const kinds=Kids.shuffle(Object.keys(SH)).slice(0,n);const cols=Kids.shuffle(COLS);
+  unit=Math.min(W/(n*1.5)/100,H/2/1.6/100,1.3);
+  sv.appendChild(el('rect',{x:0,y:H*.55,width:W,height:H*.45,class:'tray'}));
+  holes=kinds.map((k,i)=>{const x=W/(n)*(i+.5),y=H*.27;const g=el('g',{transform:`translate(${x} ${y}) scale(${unit})`,class:'hole'},SH[k]);sv.appendChild(g);return{k,x,y,g,filled:false};});
+  const order=Kids.shuffle(kinds);
+  pieces=order.map((k,i)=>{const x=W/n*(i+.5)+(Math.random()-.5)*20,y=H*.78+(Math.random()-.5)*20;
+    const g=el('g',{class:'piece',transform:`translate(${x} ${y}) scale(${unit})`,fill:cols[kinds.indexOf(k)],stroke:'rgba(0,0,0,.25)','stroke-width':4},SH[k]);
+    sv.appendChild(g);const p={k,x,y,hx:x,hy:y,g,done:false};drag(p);return p;});
+  left=n;
+}
+function place(p,x,y,s=1){p.x=x;p.y=y;p.g.setAttribute('transform',`translate(${x} ${y}) scale(${unit*s})`);}
+function drag(p){
+  let ox=0,oy=0,id=null;
+  p.g.addEventListener('pointerdown',e=>{if(p.done||id!==null)return;id=e.pointerId;try{p.g.setPointerCapture(id);}catch(_){}const r=sv.getBoundingClientRect();ox=e.clientX-r.left-p.x;oy=e.clientY-r.top-p.y;
+    sv.appendChild(p.g);p.g.classList.add('drag');place(p,p.x,p.y,1.12);Kids.blip(500);});
+  p.g.addEventListener('pointermove',e=>{if(e.pointerId!==id)return;const r=sv.getBoundingClientRect();place(p,e.clientX-r.left-ox,e.clientY-r.top-oy,1.12);});
+  const up=e=>{if(e.pointerId!==id)return;id=null;p.g.classList.remove('drag');
+    const h=holes.find(h=>!h.filled&&Math.hypot(h.x-p.x,h.y-p.y)<70*unit+20);
+    if(h&&h.k===p.k){h.filled=true;p.done=true;place(p,h.x,h.y);Kids.yay(false);Kids.say(p.k);score++;document.getElementById('n').textContent=score;
+      if(--left===0)setTimeout(()=>{Kids.yay();Kids.say('ぜんぶ できたね！');setTimeout(round,1600);},400);}
+    else{if(h){Kids.oops();}animateBack(p);}
+  };
+  p.g.addEventListener('pointerup',up);p.g.addEventListener('pointercancel',up);
+}
+function animateBack(p){const sx=p.x,sy=p.y,t0=performance.now();(function s(t){const k=Math.min(1,(t-t0)/250),e=1-(1-k)**3;place(p,sx+(p.hx-sx)*e,sy+(p.hy-sy)*e);if(k<1)requestAnimationFrame(s);})(t0);}
+let rt;new ResizeObserver(()=>{const r=board.getBoundingClientRect();if(Math.abs(r.width-W)<2&&Math.abs(r.height-H)<2)return;clearTimeout(rt);rt=setTimeout(round,150);}).observe(board);
+round();
+</script>
+</body>
+</html>
