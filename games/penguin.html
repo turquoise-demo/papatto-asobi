@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>そらとぶ ペンギン｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<style>.board{background:#1F2A6B;touch-action:none}#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}.hud{position:absolute;left:12px;right:12px;top:10px;display:flex;justify-content:space-between;z-index:2;pointer-events:none;font-size:20px}.hud span{background:rgba(255,255,255,.85);border-radius:14px;padding:2px 12px}</style>
+</head>
+<body>
+<div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">そらとぶ ペンギン</h1></div>
+<div class="board" id="board"><canvas id="cv"></canvas><div class="hud"><span id="hp"></span><span>てん <b id="sc">0</b></span></div>
+<div class="overlay" id="ov"><p class="msg">そらとぶ ペンギン</p><p class="sub">ゆびで うごかすと ゆきだまが じどうで でるよ<br>ほしを とると パワーアップ！</p><button class="big" id="go" type="button">はじめる</button></div></div></div>
+<script src="../shared/kids.js?v=20261125"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d');let W=0,H=0;
+function fit(){const r=$('board').getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);}new ResizeObserver(fit).observe($('board'));fit();
+let P,S=[],E=[],B=[],I=[],X=[],t=0,run=false,hp=3,score=0,pow=1,inv=0,lv=1,kills=0,boss=null,keys={};
+const COL=['#FF8FB1','#8CE0C0','#FFC86B','#B99CFF'];
+function start(){P={x:W/2,y:H*.8,tx:W/2,ty:H*.8};S=[];E=[];B=[];I=[];X=[];t=0;hp=3;score=0;pow=1;inv=0;lv=1;kills=0;boss=null;run=true;$('ov').hidden=true;hud();Kids.blip(800);}
+function hud(){$('hp').textContent='♥'.repeat(Math.max(0,hp))+'♡'.repeat(Math.max(0,3-hp));$('sc').textContent=score;}
+function boom(x,y,col,n=12){for(let i=0;i<n;i++)X.push({x,y,vx:(Math.random()-.5)*7,vy:(Math.random()-.5)*7,l:28,col});}
+function hurt(){if(inv>0)return;hp--;inv=100;pow=Math.max(1,pow-1);Kids.oops();boom(P.x,P.y,'#fff');hud();if(hp<=0){run=false;setTimeout(()=>{const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">おつかれさま！</p><p class="sub">てん ${score}　ステージ ${lv}</p><button class="big" id="go" type="button">もういちど</button>`;$('go').onclick=start;},600);}}
+function step(){t++;if(inv>0)inv--;
+  if(keys.L)P.tx-=6;if(keys.R)P.tx+=6;if(keys.U)P.ty-=6;if(keys.D)P.ty+=6;P.tx=Math.max(24,Math.min(W-24,P.tx));P.ty=Math.max(60,Math.min(H-30,P.ty));P.x+=(P.tx-P.x)*.25;P.y+=(P.ty-P.y)*.25;
+  if(t%(pow>3?9:12)===0){const a=pow===1?[0]:pow===2?[-.09,.09]:[-.2,0,.2];a.forEach(r=>S.push({x:P.x,y:P.y-24,vx:Math.sin(r)*9,vy:-9}));if(t%24===0)Kids.tone(900,.03,'sine',.02);}
+  if(!boss&&t%Math.max(22,54-lv*6)===0){const k=Math.floor(Math.random()*4);E.push({x:30+Math.random()*(W-60),y:-30,k,hp:1+Math.floor(lv/2)+(k===3?1:0),vy:1.1+Math.random()*.8+lv*.15,ph:Math.random()*6,r:20});}
+  if(!boss&&kills>=10+lv*4){boss={x:W/2,y:-80,hp:8+lv*10,max:8+lv*10,ph:0};Kids.say('ボスが きたよ');I.push({x:W/2,y:40});}
+  if(boss){boss.ph+=.02;boss.y+=(H*.2-boss.y)*.03;boss.x=W/2+Math.sin(boss.ph)*(W/2-80);if(t%Math.max(44,104-lv*12)===0)for(let i=-Math.min(3,lv);i<=Math.min(3,lv);i+=lv===1?2:1)B.push({x:boss.x,y:boss.y+50,vx:i*1.3,vy:2+lv*.15});
+    if(Math.hypot(boss.x-P.x,boss.y-P.y)<70)hurt();}
+  E.forEach(e=>{e.y+=e.vy;e.x+=Math.sin(t*.04+e.ph)*(e.k===1?2.4:.8);if(lv>1&&e.k===2&&Math.random()<.006)B.push({x:e.x,y:e.y+16,vx:0,vy:3});if(Math.hypot(e.x-P.x,e.y-P.y)<34){e.hp=0;hurt();}});
+  S.forEach(s=>{s.x+=s.vx;s.y+=s.vy;if(boss&&Math.hypot(boss.x-s.x,boss.y-s.y)<58){s.y=-99;boss.hp--;boom(s.x,s.y<0?boss.y+40:s.y,'#fff',2);if(boss.hp<=0){boom(boss.x,boss.y,'#FFD23F',50);score+=300*lv;Kids.yay();Kids.say('ステージ クリア！');boss=null;lv++;kills=0;hp=Math.min(3,hp+1);B=[];hud();}}
+    E.forEach(e=>{if(e.hp>0&&Math.hypot(e.x-s.x,e.y-s.y)<e.r+8){s.y=-99;e.hp--;if(e.hp<=0){score+=10*lv;kills++;hud();Kids.pop();boom(e.x,e.y,COL[e.k]);if(Math.random()<.14)I.push({x:e.x,y:e.y});}}});});
+  I.forEach(i=>{i.y+=1.8;if(Math.hypot(i.x-P.x,i.y-P.y)<38){i.y=9999;pow=Math.min(4,pow+1);score+=50;hud();Kids.yay(false);}});
+  B.forEach(b=>{b.x+=b.vx;b.y+=b.vy;if(Math.hypot(b.x-P.x,b.y-P.y)<20){b.y=9999;hurt();}});X.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.l--;});
+  S=S.filter(s=>s.y>-20&&s.x>-20&&s.x<W+20);E=E.filter(e=>e.hp>0&&e.y<H+40);B=B.filter(b=>b.y<H+30);I=I.filter(i=>i.y<H+30);X=X.filter(p=>p.l>0);}
+function peng(x,y){c.save();c.translate(x,y);c.rotate((P.tx-P.x)*.004);if(inv>0&&t%10<5)c.globalAlpha=.4;const f=Math.sin(t*.35)*.35;c.fillStyle='#2F3E73';[-1,1].forEach(s=>{c.save();c.scale(s,1);c.translate(16,-2);c.rotate(.5+f);c.beginPath();c.ellipse(6,6,7,17,-.5,0,7);c.fill();c.restore();});c.beginPath();c.ellipse(0,0,20,25,0,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.ellipse(0,5,13,17,0,0,7);c.ellipse(-6,-9,7,8,0,0,7);c.ellipse(6,-9,7,8,0,0,7);c.fill();c.fillStyle='#1F2A44';c.beginPath();c.arc(-5,-9,2.6,0,7);c.arc(5,-9,2.6,0,7);c.fill();c.fillStyle='#FFB03B';c.beginPath();c.moveTo(-5,-4);c.lineTo(5,-4);c.lineTo(0,3);c.fill();c.fillStyle='#E8554A';c.fillRect(-14,10,28,5);c.fillRect(6,12,6,14);c.restore();}
+function foe(e){c.save();c.translate(e.x,e.y);c.fillStyle=COL[e.k];c.beginPath();c.ellipse(0,0,e.r,e.r*1.1,0,0,7);c.fill();c.beginPath();c.moveTo(-5,e.r);c.lineTo(5,e.r);c.lineTo(0,e.r+8);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(-7,-3,6,0,7);c.arc(7,-3,6,0,7);c.fill();c.fillStyle='#33264F';c.beginPath();c.arc(-6,-1,3,0,7);c.arc(6,-1,3,0,7);c.fill();c.restore();}
+function draw(){const g=c.createLinearGradient(0,0,0,H),sk=[['#1F2A6B','#6A7BE0'],['#4A1F6B','#E07AA8'],['#0F4A5C','#4FC3B0']][(lv-1)%3];g.addColorStop(0,sk[0]);g.addColorStop(1,sk[1]);c.fillStyle=g;c.fillRect(0,0,W,H);c.fillStyle='rgba(255,255,255,.7)';for(let i=0;i<50;i++)c.fillRect((i*97)%W,(i*61+t*(1+i%3))%H,2,2+i%3*2);
+  if(!P)return;I.forEach(i=>{c.fillStyle='#FFD23F';c.beginPath();for(let k=0;k<10;k++){const a=k*Math.PI/5+t*.04,r=k%2?8:17;c.lineTo(i.x+Math.cos(a)*r,i.y+Math.sin(a)*r);}c.fill();});E.forEach(foe);
+  if(boss){c.save();c.translate(boss.x,boss.y);c.fillStyle='#7E57C2';c.beginPath();c.arc(0,0,52,0,7);c.fill();c.fillStyle='#FFD23F';c.beginPath();c.moveTo(-34,-38);c.lineTo(-22,-72);c.lineTo(0,-48);c.lineTo(22,-72);c.lineTo(34,-38);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(-18,-6,14,0,7);c.arc(18,-6,14,0,7);c.fill();c.fillStyle='#33264F';c.beginPath();c.arc(-16,-2,7,0,7);c.arc(16,-2,7,0,7);c.fill();c.strokeStyle='#33264F';c.lineWidth=5;c.beginPath();c.arc(0,20,14,.2,Math.PI-.2);c.stroke();c.restore();c.fillStyle='rgba(0,0,0,.4)';c.fillRect(W*.2,52,W*.6,10);c.fillStyle='#FF6FA5';c.fillRect(W*.2,52,W*.6*Math.max(0,boss.hp/boss.max),10);}
+  c.fillStyle='#fff';S.forEach(s=>{c.beginPath();c.arc(s.x,s.y,6,0,7);c.fill();});c.fillStyle='#FFE066';B.forEach(b=>{c.beginPath();c.arc(b.x,b.y,8,0,7);c.fill();});X.forEach(p=>{c.globalAlpha=Math.max(0,p.l/28);c.fillStyle=p.col;c.beginPath();c.arc(p.x,p.y,4,0,7);c.fill();});c.globalAlpha=1;peng(P.x,P.y);}
+let acc=0,last=performance.now();function loop(n){acc+=Math.min(60,n-last);last=n;while(acc>16.6){acc-=16.6;if(run)step();}if(W)draw();requestAnimationFrame(loop);}
+let dx=0,dy=0,id=null;cv.addEventListener('pointerdown',e=>{if(!run||id!==null)return;id=e.pointerId;try{cv.setPointerCapture(id);}catch(_){}dx=P.tx-e.clientX;dy=P.ty-e.clientY;});cv.addEventListener('pointermove',e=>{if(e.pointerId===id&&run){P.tx=e.clientX+dx;P.ty=e.clientY+dy;}});['pointerup','pointercancel'].forEach(n=>cv.addEventListener(n,e=>{if(e.pointerId===id)id=null;}));
+const KM={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D'};addEventListener('keydown',e=>{if(KM[e.key]){keys[KM[e.key]]=1;e.preventDefault();}});addEventListener('keyup',e=>{if(KM[e.key])keys[KM[e.key]]=0;});
+$('go').onclick=start;requestAnimationFrame(loop);
+</script>
+</body>
+</html>

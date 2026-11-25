@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>めいろ たんけん｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#E3F4D7;touch-action:none;display:grid;grid-template-rows:1fr auto}#well{min-height:0;display:flex;align-items:center;justify-content:center}#cv{touch-action:none}.pads{justify-content:center;gap:10px}</style>
+</head>
+<body>
+<div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">めいろ たんけん</h1><div class="score"><svg viewBox="0 0 100 100"><polygon points="50,7 61,37 93,38 68,58 77,90 50,71 23,90 32,58 7,38 39,37" fill="#FFD23F" stroke="#E0A800" stroke-width="5"/></svg><span id="st">0/3</span></div></div>
+<div class="board"><div id="well"><canvas id="cv"></canvas></div><div class="pads"><button class="ctl" id="L">←</button><button class="ctl" id="U">↑</button><button class="ctl" id="D">↓</button><button class="ctl" id="R">→</button></div>
+<div class="overlay" id="ov"><p class="msg">めいろ たんけん</p><p class="sub">ゆびで なぞって ほしを ３つ あつめて<br>たからばこまで いこう</p><div class="choices" id="ch"></div></div></div></div>
+<script src="../shared/kids.js?v=20261125"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d');let n=6,m=7,S=40,g=[],P={x:0,y:0},px=0,py=0,stars=[],run=false,lv=0,trail=[],bw=0,bh=0;
+const well=$('well');function fit(){const r=well.getBoundingClientRect();bw=r.width;bh=r.height;S=Math.floor(Math.min((bw-24)/n,(bh-24)/m));const d=Math.min(devicePixelRatio||1,2);cv.style.width=S*n+8+'px';cv.style.height=S*m+8+'px';cv.width=(S*n+8)*d;cv.height=(S*m+8)*d;c.setTransform(d,0,0,d,4*d,4*d);}new ResizeObserver(fit).observe(well);
+const DX=[0,1,0,-1],DY=[-1,0,1,0];
+function make(){g=Array.from({length:m},()=>Array.from({length:n},()=>[1,1,1,1]));const seen=new Set(['0,0']),stk=[[0,0]];while(stk.length){const[x,y]=stk[stk.length-1],o=[0,1,2,3].filter(d=>{const a=x+DX[d],b=y+DY[d];return a>=0&&b>=0&&a<n&&b<m&&!seen.has(a+','+b);});if(!o.length){stk.pop();continue;}const d=o[Math.floor(Math.random()*o.length)],a=x+DX[d],b=y+DY[d];g[y][x][d]=0;g[b][a][(d+2)%4]=0;seen.add(a+','+b);stk.push([a,b]);}
+  for(let k=0;k<n*m/14;k++){const x=1+Math.floor(Math.random()*(n-2)),y=1+Math.floor(Math.random()*(m-2)),d=Math.floor(Math.random()*4);g[y][x][d]=0;g[y+DY[d]][x+DX[d]][(d+2)%4]=0;}
+  const cells=[];for(let y=0;y<m;y++)for(let x=0;x<n;x++)if(x+y>2&&!(x===n-1&&y===m-1))cells.push([x,y]);stars=Kids.shuffle(cells).slice(0,3).map(([x,y])=>({x,y}));}
+function start(l){lv=l;[n,m]=[[6,7],[8,10],[11,13],[14,17]][Math.min(3,l)];if(bw>bh)[n,m]=[Math.round(n*1.35),Math.max(5,Math.round(m*.7))];fit();make();P={x:0,y:0};px=py=0;trail=[[0,0]];run=true;$('ov').hidden=true;hud();Kids.blip(800);}
+function hud(){$('st').textContent=stars.filter(s=>s.got).length+'/3';}
+function go(d){if(!run||g[P.y][P.x][d])return false;P.x+=DX[d];P.y+=DY[d];trail.push([P.x,P.y]);if(trail.length>120)trail.shift();const s=stars.find(s=>!s.got&&s.x===P.x&&s.y===P.y);if(s){s.got=1;hud();Kids.yay(false);}else Kids.tone(420,.03,'sine',.02);
+  if(P.x===n-1&&P.y===m-1){if(stars.every(s=>s.got)){run=false;Kids.yay();Kids.say('たからばこ みつけた！');setTimeout(()=>{const o=$('ov');o.hidden=false;o.innerHTML='<p class="msg">たからばこ みつけた！</p><div class="choices"><button class="big" id="go" type="button">つぎの めいろ</button><button class="big gray" id="sel" type="button">えらびなおす</button></div>';$('go').onclick=()=>start(Math.min(3,lv+1));$('sel').onclick=sel;},900);}else Kids.say('ほしが まだ あるよ');}return true;}
+function sel(){const o=$('ov');o.innerHTML='<p class="msg">どの めいろ？</p><div class="choices" id="ch"></div>';o.hidden=false;lvls();}
+function lvls(){['ちいさい','ふつう','おおきい','とても おおきい'].forEach((t,i)=>{const b=document.createElement('button');b.className='choice';b.type='button';b.innerHTML=`${'★'.repeat(i+1)}<span>${t}</span>`;b.onclick=()=>start(i);$('ch').appendChild(b);});}
+let on=false;function follow(e){const r=cv.getBoundingClientRect(),x=Math.floor((e.clientX-r.left-4)/S),y=Math.floor((e.clientY-r.top-4)/S);for(let k=0;k<30&&run;k++){const dx=x-P.x,dy=y-P.y;if(!dx&&!dy)break;const a=dx>0?1:3,b=dy>0?2:0;const first=Math.abs(dx)>=Math.abs(dy)?[dx?a:-1,dy?b:-1]:[dy?b:-1,dx?a:-1];if(!(first[0]>=0&&go(first[0]))&&!(first[1]>=0&&go(first[1])))break;}}
+cv.addEventListener('pointerdown',e=>{on=true;try{cv.setPointerCapture(e.pointerId);}catch(_){}follow(e);});cv.addEventListener('pointermove',e=>on&&follow(e));['pointerup','pointercancel'].forEach(k=>cv.addEventListener(k,()=>on=false));
+[['U',0],['R',1],['D',2],['L',3]].forEach(([i,d])=>Kids.hold($(i),()=>go(d),{repeat:130}));addEventListener('keydown',e=>{const d={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(d!==undefined){e.preventDefault();go(d);}});
+function loop(t){requestAnimationFrame(loop);if(!g.length)return;px+=(P.x-px)*.35;py+=(P.y-py)*.35;c.clearRect(-4,-4,S*n+8,S*m+8);c.fillStyle='#FFFDF2';c.beginPath();c.roundRect(-3,-3,S*n+6,S*m+6,10);c.fill();
+  c.strokeStyle='rgba(255,176,59,.35)';c.lineWidth=S*.26;c.lineCap=c.lineJoin='round';c.beginPath();trail.forEach(([x,y],i)=>c[i?'lineTo':'moveTo']((x+.5)*S,(y+.5)*S));c.stroke();
+  const ex=(n-.5)*S,ey=(m-.5)*S,ok=stars.every(s=>s.got);c.fillStyle='#A9743F';c.beginPath();c.roundRect(ex-S*.3,ey-S*.2,S*.6,S*.45,S*.08);c.fill();c.fillStyle=ok?'#FFD23F':'#7B4A34';c.fillRect(ex-S*.3,ey-S*.06,S*.6,S*.1);c.beginPath();c.arc(ex,ey,S*.09,0,7);c.fill();
+  stars.forEach(s=>{if(s.got)return;c.fillStyle='#FFD23F';c.beginPath();for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,r=S*(k%2?.14:.3);c.lineTo((s.x+.5)*S+Math.cos(a)*r,(s.y+.5)*S+Math.sin(a)*r+Math.sin(t/300)*2);}c.fill();});
+  c.strokeStyle='#3F9C63';c.lineWidth=Math.max(3,S*.12);c.beginPath();for(let y=0;y<m;y++)for(let x=0;x<n;x++){const q=g[y][x];if(q[0]){c.moveTo(x*S,y*S);c.lineTo((x+1)*S,y*S);}if(q[3]){c.moveTo(x*S,y*S);c.lineTo(x*S,(y+1)*S);}if(x===n-1&&q[1]){c.moveTo(n*S,y*S);c.lineTo(n*S,(y+1)*S);}if(y===m-1&&q[2]){c.moveTo(x*S,m*S);c.lineTo((x+1)*S,m*S);}}c.stroke();
+  const x=(px+.5)*S,y=(py+.5)*S,r=S*.3;c.fillStyle='#F7931E';c.beginPath();c.moveTo(x-r,y-r*.3);c.lineTo(x-r*.8,y-r*1.25);c.lineTo(x-r*.1,y-r*.8);c.moveTo(x+r,y-r*.3);c.lineTo(x+r*.8,y-r*1.25);c.lineTo(x+r*.1,y-r*.8);c.fill();c.beginPath();c.arc(x,y,r,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.ellipse(x,y+r*.4,r*.6,r*.4,0,0,7);c.fill();c.fillStyle='#33264F';c.beginPath();c.arc(x-r*.4,y-r*.1,r*.14,0,7);c.arc(x+r*.4,y-r*.1,r*.14,0,7);c.arc(x,y+r*.2,r*.11,0,7);c.fill();}
+lvls();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

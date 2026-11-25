@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ぴょんぴょん ぼうけん｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<style>.board{background:#8FD8FF;touch-action:none}#cv{position:absolute;inset:0;width:100%;height:100%}.hud{position:absolute;left:12px;right:12px;top:10px;display:flex;justify-content:space-between;z-index:2;pointer-events:none;font-size:20px}.hud span{background:rgba(255,255,255,.85);border-radius:14px;padding:2px 12px}</style>
+</head>
+<body>
+<div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">ぴょんぴょん ぼうけん</h1></div>
+<div class="board" id="board"><canvas id="cv"></canvas><div class="hud"><span id="hp"></span><span>にんじん <b id="cn">0</b></span></div>
+<div class="overlay" id="ov"><p class="msg">ぴょんぴょん ぼうけん</p><p class="sub">がめんを タッチで ジャンプ。くうちゅうで もう１かい とべるよ<br>もこもこは うえから ふむと へっちゃら</p><div class="choices" id="ch"></div></div></div></div>
+<script src="../shared/kids.js?v=20261125"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d');let W,H,Z=1,VW=520;
+function fit(){const r=$('board').getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;Z=Math.min(H/430,W/470);VW=W/Z;c.setTransform(d,0,0,d,0,0);}new ResizeObserver(fit).observe($('board'));fit();
+const GY=350,THEME=[['#8FD8FF','#E6F8FF','#7CCB5A','#B98A5A'],['#FFC7A0','#FFEBD6','#E0B25A','#A9743F'],['#39346E','#7A62B8','#6E7FC9','#4A4580']];
+let P,G=[],I=[],F=[],goal=0,stage=0,run=false,hp=3,coin=0,cam=0,inv=0,t=0,parts=[];
+function make(n){let x=0,s=n*97+13;const R=()=>(s=(s*16807)%2147483647)/2147483647;for(let i=0;i<5;i++)R();G=[{x:-300,w:900,y:GY}];I=[];F=[];x=600;const len=3600+n*900;
+  while(x<len){const gap=70+R()*(45+n*18);x+=gap;const w=260+R()*320;G.push({x,w,y:GY});
+    if(R()<.75){for(let k=0;k<4;k++)I.push({x:x+50+k*34,y:GY-40});}
+    if(R()<.62){const py=GY-85-R()*30,pw=110+R()*70,px=x+w*.35;G.push({x:px,w:pw,y:py,p:1});for(let k=0;k<3;k++)I.push({x:px+22+k*32,y:py-34});}
+    if(R()<.35+n*.14&&w>300)F.push({x:x+w*.72,y:GY,a:x+w*.5,b:x+w-26,v:(R()<.5?-1:1)*(.5+n*.2)});
+    x+=w;}
+  x+=80;G.push({x,w:1200,y:GY});goal=x+340;}
+function start(n){stage=n;make(n);hp=3;coin=0;P={x:0,y:GY,vy:0,j:0,safe:0};cam=-100;inv=0;parts=[];t=0;run=true;$('ov').hidden=true;hud();Kids.blip(800);}
+function hud(){$('hp').textContent='♥'.repeat(hp)+'♡'.repeat(3-hp);$('cn').textContent=coin;}
+function jump(){if(!run||P.j>1)return;P.vy=P.j?-9.6:-11.2;P.j++;Kids.tone(P.j>1?620:480,.12,'sine',.07,0,1.6);}
+function hurt(fall){if(inv>0&&!fall)return;hp--;hud();Kids.oops();inv=110;if(hp<=0){run=false;end('おしい！','もういちど',stage);return;}
+  if(fall){const g=G.filter(g=>!g.p&&g.x+g.w<P.x+60).pop()||G[0];const nx=G.find(q=>!q.p&&q.x+q.w>P.x)||g;P.x=Math.max(nx.x+40,P.x-40);P.y=GY-150;P.vy=0;P.j=1;}}
+function step(){t++;if(inv>0)inv--;const v=3.1+stage*.45;P.x+=v;const py=P.y;P.vy+=.58;P.y+=P.vy;let on=false;
+  if(P.vy>=0)for(const g of G)if(P.x+11>g.x&&P.x-11<g.x+g.w&&py<=g.y+3&&P.y>=g.y){P.y=g.y;P.vy=0;P.j=0;on=true;}
+  if(!on&&P.j===0&&P.vy>3)P.j=1;
+  if(P.y>GY+190)hurt(true);
+  I.forEach(i=>{if(!i.got&&Math.abs(i.x-P.x)<24&&Math.abs(i.y-(P.y-20))<28){i.got=1;coin++;hud();Kids.tone(880+coin%5*60,.07,'triangle',.06);}});
+  F.forEach(f=>{if(f.dead)return;f.x+=f.v;if(f.x<f.a||f.x>f.b)f.v*=-1;if(Math.abs(f.x-P.x)<27&&P.y>f.y-34&&P.y<f.y+8){if(P.vy>1&&py<f.y-14){f.dead=1;P.vy=-9;P.j=1;coin+=3;hud();Kids.pop();for(let k=0;k<10;k++)parts.push({x:f.x,y:f.y-15,vx:(Math.random()-.5)*6,vy:-Math.random()*5,l:30});}else hurt();}});
+  parts=parts.filter(p=>(p.x+=p.vx,p.y+=p.vy,p.vy+=.3,p.l-->0));cam+=(P.x-VW*.28-cam)*.12;
+  if(P.x>goal){run=false;Kids.yay();Kids.say('ゴール！');end('ゴール！ にんじん '+coin+'ほん',stage<2?'つぎの ステージ':'もういちど',stage<2?stage+1:0);}}
+function end(m,b,n){setTimeout(()=>{const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">${m}</p><div class="choices"><button class="big" id="go" type="button">${b}</button><button class="big gray" id="sel" type="button">ステージを えらぶ</button></div>`;$('go').onclick=()=>start(n);$('sel').onclick=sel;},500);}
+function sel(){const o=$('ov');o.hidden=false;o.innerHTML='<p class="msg">ステージを えらぼう</p><div class="choices" id="ch"></div>';stages();}
+function stages(){['はらっぱ','さばく','よぞら'].forEach((n,i)=>{const b=document.createElement('button');b.className='choice';b.type='button';b.innerHTML=`${'★'.repeat(i+1)}<span>${n}</span>`;b.onclick=()=>start(i);$('ch').appendChild(b);});}
+function rabbit(x,y){c.save();c.translate(x,y);const b=P.j?0:Math.abs(Math.sin(t*.28))*5;c.translate(0,-b);if(P.j)c.rotate(Math.max(-.25,Math.min(.25,P.vy*.02)));if(inv>0&&t%10<5)c.globalAlpha=.4;
+  c.fillStyle='#fff';c.strokeStyle='#8A7B8F';c.lineWidth=2;[[-7,-.2],[6,.15]].forEach(([dx,a])=>{c.save();c.translate(dx,-42);c.rotate(a+(P.j?-.5:Math.sin(t*.28)*.15));c.beginPath();c.ellipse(0,-14,6,18,0,0,7);c.fill();c.stroke();c.fillStyle='#FFB3C6';c.beginPath();c.ellipse(0,-13,2.6,11,0,0,7);c.fill();c.fillStyle='#fff';c.restore();});
+  c.beginPath();c.ellipse(-3,-14,18,15,0,0,7);c.fill();c.stroke();c.beginPath();c.arc(4,-33,16,0,7);c.fill();c.stroke();c.fillStyle='#F06292';c.beginPath();c.moveTo(-10,-22);c.quadraticCurveTo(4,-14,17,-22);c.lineTo(15,-16);c.quadraticCurveTo(4,-9,-9,-16);c.fill();
+  c.fillStyle='#33264F';c.beginPath();c.arc(8,-35,2.8,0,7);c.arc(16,-35,2.2,0,7);c.fill();c.fillStyle='#FF9AA8';c.beginPath();c.arc(4,-29,3.4,0,7);c.fill();
+  c.fillStyle='#fff';const l=P.j?0:Math.sin(t*.45)*7;[[-8,l],[6,-l]].forEach(([dx,k])=>{c.beginPath();c.ellipse(dx+k,-2,8,4.5,0,0,7);c.fill();c.stroke();});c.restore();}
+function draw(){const T=THEME[stage];const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,T[0]);g.addColorStop(1,T[1]);c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.save();c.translate(0,H-430*Z);c.scale(Z,Z);
+  for(let i=0;i<8;i++){const x=((i*190-cam*.25)%1500+1500)%1500-200;c.fillStyle=stage===2?'rgba(255,255,255,.2)':'rgba(255,255,255,.75)';c.beginPath();c.arc(x,60+(i%3)*45,22,0,7);c.arc(x+26,52+(i%3)*45,28,0,7);c.arc(x+56,60+(i%3)*45,20,0,7);c.fill();}
+  for(let i=0;i<9;i++){const x=((i*210-cam*.5)%1800+1800)%1800-300;c.fillStyle=T[2]+'88';c.beginPath();c.arc(x,GY+60,130,Math.PI,0);c.fill();}
+  c.translate(-cam,0);
+  G.forEach(q=>{if(q.x>cam+VW+50||q.x+q.w<cam-50)return;if(q.p){c.fillStyle=T[3];c.beginPath();c.roundRect(q.x,q.y,q.w,22,10);c.fill();c.fillStyle=T[2];c.beginPath();c.roundRect(q.x,q.y,q.w,10,6);c.fill();}else{c.fillStyle=T[3];c.fillRect(q.x,q.y,q.w,200);c.fillStyle=T[2];c.beginPath();c.roundRect(q.x-4,q.y,q.w+8,18,8);c.fill();}});
+  I.forEach(i=>{if(i.got||i.x>cam+VW)return;const y=i.y+Math.sin(t*.08+i.x)*3;c.save();c.translate(i.x,y);c.rotate(.5);c.fillStyle='#FF8A1E';c.beginPath();c.moveTo(-6,-9);c.lineTo(6,-9);c.lineTo(0,13);c.fill();c.fillStyle='#3FAE5A';c.fillRect(-4,-16,3,8);c.fillRect(1,-16,3,8);c.restore();});
+  F.forEach(f=>{if(f.dead)return;c.fillStyle='#9B6BC9';c.beginPath();for(let k=0;k<9;k++){const a=k*Math.PI*2/9;c.moveTo(f.x,f.y-17);c.arc(f.x+Math.cos(a)*13,f.y-17+Math.sin(a)*12,8,0,7);}c.fill();c.beginPath();c.arc(f.x,f.y-17,15,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(f.x-5,f.y-20,5,0,7);c.arc(f.x+6,f.y-20,5,0,7);c.fill();c.fillStyle='#33264F';c.beginPath();c.arc(f.x-5,f.y-19,2.3,0,7);c.arc(f.x+6,f.y-19,2.3,0,7);c.fill();});
+  c.fillStyle='#fff';c.fillRect(goal,GY-150,7,150);c.fillStyle='#F06292';c.beginPath();c.moveTo(goal+7,GY-150);c.lineTo(goal+70,GY-125+Math.sin(t*.1)*5);c.lineTo(goal+7,GY-100);c.fill();
+  parts.forEach(p=>{c.globalAlpha=p.l/30;c.fillStyle='#C9A6F0';c.beginPath();c.arc(p.x,p.y,5,0,7);c.fill();});c.globalAlpha=1;if(P)rabbit(P.x,P.y);c.restore();}
+let acc=0,last=performance.now();function loop(n){acc+=Math.min(60,n-last);last=n;while(acc>16.6){acc-=16.6;if(run)step();}if(W){if(P)draw();else{P={x:0,y:GY,vy:0,j:0};make(0);draw();P=null;}}requestAnimationFrame(loop);}
+$('board').addEventListener('pointerdown',e=>{if(!e.target.closest('.overlay')){e.preventDefault();jump();}});addEventListener('keydown',e=>{if((e.key===' '||e.key==='ArrowUp')&&!e.repeat&&run){e.preventDefault();jump();}});
+stages();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
