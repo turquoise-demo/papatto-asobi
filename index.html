@@ -2,21 +2,20 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>ぱぱっとあそび</title>
 <meta name="description" content="こどもが ひとりで えらべる、こうこく なしの あそびば。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
-<link rel="stylesheet" href="shared/kids.css">
+<link rel="stylesheet" href="shared/kids.css?v=20261125">
 <style>
-body{overflow:auto}
+body{overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .wrap{min-height:100%;box-sizing:border-box;padding-top:max(18px,env(safe-area-inset-top,0px));padding-bottom:max(28px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1100px;margin:0 auto}
 h1{margin:6px 0 4px;color:#fff;font-size:clamp(28px,5vw,44px);letter-spacing:.05em;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 h1 .dots{display:inline-flex;gap:6px}
 h1 .dots i{width:16px;height:16px;border-radius:50%;display:block}
 .lead{color:#DCE6FF;margin:0 0 22px;font-weight:500;font-size:16px}
 .games{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:18px}
-@media (max-width:520px){.games{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tile{padding:12px 10px;border-radius:20px}.tile b{font-size:17px}.tile span{font-size:11px}}
 .tile{display:flex;flex-direction:column;align-items:center;gap:10px;text-decoration:none;color:var(--ink);background:var(--panel);border-radius:26px;padding:18px 14px 16px;box-shadow:0 6px 0 var(--frame-deep);transition:transform .15s}
 .tile:hover{transform:translateY(-4px) rotate(-1deg)}
 .tile:active{transform:translateY(4px);box-shadow:0 2px 0 var(--frame-deep)}
@@ -30,6 +29,7 @@ h1 .dots i{width:16px;height:16px;border-radius:50%;display:block}
 .wrap>.grp:first-of-type{margin-top:0}
 .tile .lv{color:#E0A800;font-size:14px;letter-spacing:2px}
 footer{margin-top:28px;color:#C9D6FF;font-size:12px;font-weight:500;text-align:center}
+@media (max-width:520px){.games{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tile{padding:12px 10px;border-radius:20px}.tile b{font-size:16px;letter-spacing:0;text-align:center}.tile span{font-size:11px}}
 </style>
 </head>
 <body>
@@ -42,7 +42,7 @@ footer{margin-top:28px;color:#C9D6FF;font-size:12px;font-weight:500;text-align:c
   <nav class="games" id="games2"></nav>
   <footer>こうこく なし・かきん なし</footer>
 </div>
-<script src="shared/kids.js"></script>
+<script src="shared/kids.js?v=20261125"></script>
 <script>
 // ゲームを増やすときは、GAMES（かんたん）か CHALLENGE（チャレンジ）に1行足すだけ
 const GAMES=[

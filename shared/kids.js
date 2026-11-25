@@ -1,4 +1,15 @@
 /* ぱぱっとあそび 共通：音・こえ・はなふぶき・絵（アイコン） */
+// 画面の固定：ピンチ・ダブルタップ・入力時の拡大と、横ずれを止める（全ページ共通）
+(()=>{
+  const st=document.createElement('style');
+  st.textContent='html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow:hidden;overscroll-behavior:none;width:100%;height:100%}body{position:fixed;inset:0;width:100%;max-width:100%;overscroll-behavior:none}*{touch-action:pan-x pan-y}input,select,textarea{font-size:max(16px,1em)}';
+  document.head.prepend(st);
+  const no=e=>e.preventDefault(),o={passive:false};
+  ['gesturestart','gesturechange','gestureend'].forEach(n=>document.addEventListener(n,no,o));
+  document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault();},o);
+  document.addEventListener('dblclick',no,o);
+  addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault();},o);
+})();
 window.Kids=(()=>{
   let ac=null;
   function audio(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();}catch(e){ac=null;}return ac;}

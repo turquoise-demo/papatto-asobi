@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>しゃぼんだま｜ぱぱっとあそび</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
-<link rel="stylesheet" href="../shared/kids.css">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
 <style>
 .board{background:linear-gradient(#BFE6FF,#E8F7FF 70%,#D9F2C4 70%,#C3E8A6);touch-action:none}
 canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -20,7 +20,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%}
   </div>
   <div class="board" id="board"><canvas id="cv"></canvas></div>
 </div>
-<script src="../shared/kids.js"></script>
+<script src="../shared/kids.js?v=20261125"></script>
 <script>
 document.getElementById('home').innerHTML=Kids.homeIcon;
 const board=document.getElementById('board'),cv=document.getElementById('cv'),c=cv.getContext('2d');
