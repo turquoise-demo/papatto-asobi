@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>PK たいけつ｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#5DBB63;touch-action:none}#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}.say{position:absolute;left:0;right:0;top:38%;text-align:center;font-size:clamp(34px,9vw,64px);color:#FFE066;-webkit-text-stroke:4px #1F2A44;paint-order:stroke;pointer-events:none;z-index:3}.tip{position:absolute;left:0;right:0;bottom:14px;text-align:center;color:#fff;pointer-events:none;font-size:17px;text-shadow:0 2px 0 rgba(0,0,0,.3)}</style>
+</head>
+<body>
+<div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">PK たいけつ</h1><div class="score"><b id="a" style="color:#E8342E">0</b>−<b id="b" style="color:#2563C9">0</b></div></div>
+<div class="board" id="board"><canvas id="cv"></canvas><div class="say" id="say"></div><div class="tip" id="tip"></div><div class="overlay" id="ov"><p class="msg">PK たいけつ</p><p class="sub">けるとき：ボールから ゴールへ ゆびを はらう<br>まもるとき：ボールが くる ところを タッチ</p><div class="choices" id="ch"></div></div></div></div>
+<script src="../shared/kids.js?v=20261125"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d');
+let W=0,H=0;function fit(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);}new ResizeObserver(fit).observe($("board"));fit();
+// ゴール内は横-1〜1、高さ0〜1
+let s=[0,0],turn=0,kick=0,phase='',t=0,ball=null,kp={x:0,y:0,tx:0,ty:0},lv=0,run=false,marks=[[],[]],tg=null;
+const G=()=>{const w=Math.min(W*.86,H*.9),h=w*.42,top=Math.max(26,H*.12);return{x:W/2,top,w,h,bot:top+h};};
+const pt=(x,y)=>{const g=G();return{x:g.x+x*g.w/2,y:g.bot-y*g.h};},spot=()=>({x:W/2,y:H*.82});
+function start(l){lv=l;s=[0,0];kick=0;turn=0;marks=[[],[]];run=true;$('ov').hidden=true;Kids.blip(800);next();}
+function next(){phase=turn?'wait':'aim';t=0;ball={p:0,x:0,y:0};kp={x:0,y:0,tx:0,ty:0};tg=null;$('say').textContent='';$('tip').textContent=turn?'ボールが きたら その ばしょを タッチ！':'ボールを ゴールへ はらおう！';hud();}
+function hud(){$('a').textContent=s[0];$('b').textContent=s[1];}
+function shoot(x,y){if(phase!=='aim')return;ball.tx=x;ball.ty=y;phase='fly';t=0;Kids.tone(160,.1,'triangle',.12);const gs=[.3,.5,.68][lv];const right=Math.random()<gs;kp.tx=right?Math.max(-.85,Math.min(.85,x+(Math.random()-.5)*.35)):(Math.random()*1.7-.85);kp.ty=right?Math.max(0,Math.min(.62,y-.15)):Math.random()*.4;}
+function cpu(){phase='cpu';t=0;ball.tx=(Math.random()<.5?-1:1)*(.25+Math.random()*.62);ball.ty=.1+Math.random()*.62;Kids.tone(160,.1,'triangle',.12);$('tip').textContent='いまだ！';}
+const flyT=()=>phase==='fly'?30:[56,46,37][lv];
+function step(){t++;if(phase==='wait'&&t>75+Math.random()*40)cpu();
+  if(phase==='fly'||phase==='cpu'){const T=flyT();ball.p=Math.min(1,t/T);const k=phase==='fly'?.13:.22;kp.x+=(kp.tx-kp.x)*k;kp.y+=(kp.ty-kp.y)*k;if(t>=T)judge();}
+  if(phase==='end'&&t>85){turn=1-turn;if(!turn)kick++;const left=5-kick;if(!turn&&kick>=5&&s[0]!==s[1]||!turn&&kick>=9)return fin();if(kick<5&&(s[0]>s[1]+left+(turn?0:0)&&!turn||s[1]>s[0]+left&&!turn))return fin();next();}}
+function judge(){const inG=Math.abs(ball.tx)<.97&&ball.ty<.97&&ball.ty>=0;const save=inG&&Math.abs(ball.tx-kp.x)<.26&&ball.ty>kp.y-.1&&ball.ty<kp.y+.48;const me=turn===0,ok=inG&&!save;marks[turn].push(ok);if(ok)s[turn]++;hud();
+  $('say').textContent=ok?'ゴール！':save?(me?'とめられた！':'ナイスセーブ！'):'はずれ！';if(me===ok){Kids.yay(me&&ok);}else Kids.oops();ball.save=save;phase='end';t=0;$('tip').textContent='';}
+function fin(){run=false;phase='';const w=s[0]>s[1],d=s[0]===s[1];if(w)Kids.yay();const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">${w?'かち！':d?'ひきわけ！':'まけちゃった'}</p><p class="sub">${s[0]} − ${s[1]}</p><div class="choices" id="ch"></div>`;menu();}
+function kid(x,y,h,col,hair,dive){c.save();c.translate(x,y);c.rotate(dive||0);const u=h/100;c.scale(u,u);c.strokeStyle='#FFE0CC';c.lineWidth=11;c.lineCap='round';c.beginPath();c.moveTo(-16,-58);c.lineTo(-34,dive||phase==='cpu'?-92:-40);c.moveTo(16,-58);c.lineTo(34,dive||phase==='cpu'?-92:-40);c.stroke();c.fillStyle='#FFD23F';c.beginPath();c.arc(-34,dive||phase==='cpu'?-95:-37,9,0,7);c.arc(34,dive||phase==='cpu'?-95:-37,9,0,7);c.fill();c.fillStyle='#37474F';c.fillRect(-15,-30,12,28);c.fillRect(3,-30,12,28);c.fillStyle=col;c.beginPath();c.roundRect(-20,-66,40,42,10);c.fill();c.fillStyle='#FFE6D6';c.beginPath();c.arc(0,-82,19,0,7);c.fill();c.fillStyle=hair;c.beginPath();c.arc(0,-86,19,Math.PI,0);c.fill();c.fillStyle='#33264F';c.beginPath();c.arc(-7,-80,2.6,0,7);c.arc(7,-80,2.6,0,7);c.fill();c.restore();}
+function draw(){const g=G();c.fillStyle='#BDE7FF';c.fillRect(0,0,W,g.bot);for(let i=0;i<Math.ceil(W/22);i++){c.fillStyle=['#FF9AA8','#FFD54F','#90CAF9','#CE93D8'][i%4];c.beginPath();c.arc(i*22+11,g.top-8+Math.sin(i*2+(phase==='end'?t/4:0))*4,9,0,7);c.fill();}
+  c.fillStyle='#5DBB63';c.fillRect(0,g.bot-4,W,H);c.fillStyle='rgba(255,255,255,.12)';for(let y=g.bot;y<H;y+=70)c.fillRect(0,y,W,35);c.strokeStyle='rgba(255,255,255,.8)';c.lineWidth=4;c.strokeRect(g.x-g.w*.62,g.bot,g.w*1.24,(H-g.bot)*.45);
+  c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=1.5;for(let i=0;i<=14;i++){c.beginPath();c.moveTo(g.x-g.w/2+i*g.w/14,g.top);c.lineTo(g.x-g.w/2+i*g.w/14,g.bot);c.stroke();}for(let i=0;i<=6;i++){c.beginPath();c.moveTo(g.x-g.w/2,g.top+i*g.h/6);c.lineTo(g.x+g.w/2,g.top+i*g.h/6);c.stroke();}c.strokeStyle='#fff';c.lineWidth=8;c.strokeRect(g.x-g.w/2,g.top,g.w,g.h+3);
+  if(!ball){return;}const k=pt(kp.x,kp.y);kid(k.x,k.y,g.h*.82,turn?'#E8342E':'#2563C9',turn?'#7A4A2C':'#263238',Math.max(-1.2,Math.min(1.2,(kp.tx-kp.x)*1.6+kp.x*.7))*(phase==='aim'||phase==='wait'?0:1));
+  const a=spot(),b=phase===''||ball.tx===undefined?a:pt(ball.tx,ball.ty),p=ball.p,x=a.x+(b.x-a.x)*p,y=a.y+(b.y-a.y)*p-Math.sin(p*Math.PI)*g.h*.12,r=Math.max(9,26-14*p);
+  if(turn&&phase!=='cpu'&&phase!=='end'){kid(a.x-46,a.y+18,g.h*.8,'#2563C9','#263238');}
+  c.fillStyle='rgba(0,0,0,.2)';c.beginPath();c.ellipse(x,(a.y+(g.bot-a.y)*p)+r,r,r*.35,0,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(x,y,r,0,7);c.fill();c.lineWidth=2;c.strokeStyle='#37474F';c.stroke();c.fillStyle='#37474F';for(let i=0;i<5;i++){const q=i*Math.PI*2/5+p*9;c.beginPath();c.arc(x+Math.cos(q)*r*.62,y+Math.sin(q)*r*.62,r*.2,0,7);c.fill();}c.beginPath();c.arc(x,y,r*.28,0,7);c.fill();
+  if(tg&&phase!=='aim'){const q=pt(tg.x,tg.y);c.strokeStyle='#FFE066';c.lineWidth=4;c.beginPath();c.arc(q.x,q.y,24,0,7);c.stroke();}
+  marks.forEach((m,i)=>m.forEach((o,j)=>{c.fillStyle=o?(i?'#2563C9':'#E8342E'):'rgba(255,255,255,.6)';c.beginPath();c.arc((i?W-18:18),g.bot+26+j*20,7,0,7);c.fill();}));}
+const inv=e=>{const r=cv.getBoundingClientRect(),g=G();return{x:(e.clientX-r.left-g.x)/(g.w/2),y:(g.bot-(e.clientY-r.top))/g.h};};let d0=null;
+cv.addEventListener('pointerdown',e=>{if(!run)return;try{cv.setPointerCapture(e.pointerId);}catch(_){}if(phase==='aim')d0={x:e.clientX,y:e.clientY};else if(phase==='cpu'||phase==='wait'){const q=inv(e);kp.tx=Math.max(-.85,Math.min(.85,q.x));kp.ty=Math.max(0,Math.min(.6,q.y-.2));tg=q;}});
+cv.addEventListener('pointerup',e=>{if(!d0||phase!=='aim'){d0=null;return;}const dx=e.clientX-d0.x,dy=e.clientY-d0.y;d0=null;if(dy>-25)return;const g=G(),a=spot(),pw=Math.min(1.35,-dy/(H*.42));const x=(dx/-dy)*(a.y-(g.bot-g.h*.4))/(g.w/2);shoot(x,Math.max(0,pw*.78));});
+function menu(){[['よわい',0],['ふつう',1],['つよい',2]].forEach(([n,l])=>{const b=document.createElement('button');b.className='choice';b.type='button';b.innerHTML=`${'★'.repeat(l+1)}<span>${n}</span>`;b.onclick=()=>start(l);$('ch').appendChild(b);});}
+let acc=0,last=performance.now();function loop(n){acc+=Math.min(60,n-last);last=n;while(acc>16.6){acc-=16.6;if(run)step();}if(W)draw();requestAnimationFrame(loop);}
+ball={p:0};menu();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

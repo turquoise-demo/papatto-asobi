@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ちいさな はたけ｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#BFE6A8;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:10px;padding:12px;box-sizing:border-box}.fld{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-content:center;min-height:0;max-width:560px;width:100%;margin:0 auto;overflow:auto}@media(orientation:landscape){.fld{grid-template-columns:repeat(6,minmax(0,1fr));max-width:1000px}}.pl{border:0;border-radius:18px;background:#8D5A3B;box-shadow:inset 0 6px 0 rgba(0,0,0,.18),0 4px 0 #6E4429;aspect-ratio:1;position:relative;padding:0;overflow:hidden;min-width:0}.pl.wet{background:#6B4028}.pl.lock{background:#A9C48F;box-shadow:none;border:4px dashed #7FA062;font-size:14px;color:#4B6B35}.pl svg{width:100%;height:100%}.pl .g{position:absolute;left:10%;right:10%;bottom:7%;height:8px;border-radius:8px;background:rgba(0,0,0,.35);overflow:hidden}.pl .g i{display:block;height:100%;background:#7ED957}.pl.rdy svg{animation:wig 1s infinite}@keyframes wig{50%{transform:scale(1.08) rotate(3deg)}}.sd{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;max-width:640px;width:100%;margin:0 auto}.sd button{border:4px solid transparent;border-radius:16px;background:#fff;padding:4px 2px;font-size:11px;min-width:0;line-height:1.4}.sd button.on{border-color:#F7931E}.sd button:disabled{opacity:.45}.sd svg{width:100%;max-width:46px}.msgb{text-align:center;margin:0;font-size:15px;min-height:1.5em}</style>
+</head>
+<body>
+<div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">ちいさな はたけ</h1><div class="score">コイン <span id="cn">0</span></div></div>
+<div class="board" id="board"><div class="fld" id="fld"></div><p class="msgb" id="ms"></p><div class="sd" id="sd"></div></div></div>
+<script src="../shared/kids.js?v=20261125"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i);
+// 名前, たね代, 売値, そだつ秒, つかえるまでの収穫数, 絵
+const V=[['にんじん',0,4,12,0,'<path d="M34 40h32L50 92z" fill="#FF8A1E"/><path d="M50 40Q30 30 34 10M50 40V8M50 40Q70 30 66 10" stroke="#3FAE5A" stroke-width="8" stroke-linecap="round" fill="none"/>'],['トマト',3,12,30,3,'<circle cx="50" cy="56" r="32" fill="#E8342E"/><path d="M50 28l-16 4 12 4-4 12 8-8 8 8-4-12 12-4z" fill="#3FAE5A"/><ellipse cx="38" cy="48" rx="6" ry="9" fill="#fff" opacity=".4"/>'],['とうもろこし',8,28,60,10,'<path d="M50 8C70 26 72 70 50 92C28 70 30 26 50 8z" fill="#FFD23F"/><path d="M50 10V90M42 22V82M58 22V82M34 40H66M33 54H67M36 68H64" stroke="#E0A800" stroke-width="2"/><path d="M50 94C24 84 24 54 30 46Q34 78 50 94zM50 94C76 84 76 54 70 46Q66 78 50 94z" fill="#3FAE5A"/>'],['いちご',15,60,120,22,'<path d="M50 92C18 66 18 32 50 30C82 32 82 66 50 92z" fill="#F0467E"/><path d="M28 30L50 16L72 30L50 40z" fill="#3FAE5A"/><g fill="#FFE28A"><circle cx="38" cy="50" r="3"/><circle cx="60" cy="50" r="3"/><circle cx="50" cy="66" r="3"/></g>'],['かぼちゃ',30,130,240,40,'<ellipse cx="32" cy="60" rx="22" ry="28" fill="#F7931E"/><ellipse cx="68" cy="60" rx="22" ry="28" fill="#F7931E"/><ellipse cx="50" cy="60" rx="20" ry="30" fill="#FFA94D"/><path d="M50 32q0-14 12-18" stroke="#3FAE5A" stroke-width="8" fill="none" stroke-linecap="round"/>'],['にじいろ すいか',80,400,480,70,'<circle cx="50" cy="54" r="36" fill="#57D6A0"/><path d="M28 26Q18 54 28 82M42 18Q36 54 42 90M58 18Q64 54 58 90M72 26Q82 54 72 82" stroke="#8E44AD" stroke-width="5" fill="none"/><polygon points="50,2 54,12 64,12 56,18 59,28 50,22 41,28 44,18 36,12 46,12" fill="#FFD23F"/>']];
+const COST=[0,0,0,15,40,90,180,320,520,800,1200,1800];
+let D={c:0,h:0,open:3,p:Array(12).fill(null)};try{const s=JSON.parse(localStorage.getItem('hatake'));if(s&&s.p&&s.p.length===12)D=s;}catch(e){}
+let sel=0,now=()=>Date.now();const save=()=>{try{localStorage.setItem('hatake',JSON.stringify(D));}catch(e){}};
+// p = {k 種類, t 植えた時刻, w 水をあげた時刻(0=まだ)}。水をあげると、のこり時間が半分になる
+function prog(p){const T=V[p.k][3]*1000,e=now()-p.t;if(!p.w)return Math.min(1,e/T);const b=(p.w-p.t)/T;return Math.min(1,b+(now()-p.w)*2/T);}
+function plot(i){const p=D.p[i];if(i>=D.open){if(i>D.open)return;if(D.c>=COST[i]){D.c-=COST[i];D.open++;Kids.yay(false);say('はたけが ひろがった！');}else{Kids.oops();say('コインが あと '+(COST[i]-D.c)+'まい ひつよう');}}
+  else if(!p){const v=V[sel];if(D.c<v[1]){Kids.oops();say('コインが たりないよ');return;}D.c-=v[1];D.p[i]={k:sel,t:now(),w:0};Kids.tone(300,.08,'triangle',.07);say(v[0]+'の たねを まいた。みずを あげよう');}
+  else if(prog(p)>=1){const v=V[p.k],big=Math.random()<.12;D.c+=v[2]*(big?3:1);D.h++;D.p[i]=null;Kids.yay(big);say(big?`とくだい ${v[0]}！ ${v[2]*3}コイン`:`${v[0]}を しゅうかく！ ${v[2]}コイン`);const n=V.findIndex(q=>q[4]===D.h);if(n>0)say(`あたらしい たね「${V[n][0]}」！`);}
+  else if(!p.w){p.w=now();Kids.tone(900,.25,'sine',.05,0,.6);say('みずを あげた。はやく そだつよ');}
+  else say('すくすく そだっています');
+  save();draw();}
+function say(m){$('ms').textContent=m;}
+function art(p){const g=prog(p),s=g>=1?1:.35+g*.5;if(g<.18)return '<svg viewBox="0 0 100 100"><ellipse cx="50" cy="72" rx="26" ry="9" fill="#5B3722"/><ellipse cx="50" cy="66" rx="6" ry="4" fill="#E9D8A6"/></svg>';
+  if(g<.6)return `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="78" rx="26" ry="9" fill="#5B3722"/><g transform="translate(50 78) scale(${.5+g})"><path d="M0 0V-26M0-14Q-20-16-22-32Q-4-32 0-14M0-18Q18-22 20-36Q4-36 0-18" stroke="#3FAE5A" stroke-width="5" fill="#7ED957"/></g></svg>`;
+  return `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="86" rx="26" ry="8" fill="#5B3722"/><g transform="translate(${50-50*s} ${84-92*s}) scale(${s})">${V[p.k][5]}</g></svg>`;}
+function draw(){$('cn').textContent=D.c;$('fld').innerHTML='';for(let i=0;i<12;i++){if(i>D.open)break;const p=D.p[i],b=document.createElement('button');b.type='button';const r=p&&prog(p)>=1;b.className='pl'+(i>=D.open?' lock':'')+(p&&p.w?' wet':'')+(r?' rdy':'');b.setAttribute('aria-label',i>=D.open?'ひろげる':p?V[p.k][0]:'あいている はたけ');b.innerHTML=i>=D.open?`ひろげる<br>${COST[i]}コイン`:p?art(p)+(r?'':`<span class="g"><i style="width:${prog(p)*100}%"></i></span>`):'';b.onclick=()=>plot(i);$('fld').appendChild(b);}seeds();}
+function seeds(){$('sd').innerHTML='';V.forEach((v,i)=>{const b=document.createElement('button'),lk=D.h<v[4];b.type='button';b.disabled=lk;b.className=i===sel?'on':'';b.innerHTML=`<svg viewBox="0 0 100 100" style="${lk?'filter:brightness(0);opacity:.3':''}">${v[5]}</svg><br>${lk?'あと'+(v[4]-D.h)+'こ':v[1]?v[1]+'まい':'ただ'}`;b.onclick=()=>{sel=i;Kids.blip();say(`${v[0]}（うると ${v[2]}コイン）`);seeds();};$('sd').appendChild(b);});}
+let sig='';setInterval(()=>{const s=D.p.map(p=>p?(prog(p)<.18?0:prog(p)<.6?1:prog(p)<1?2:3):'-').join('');if(s!==sig){sig=s;draw();}else document.querySelectorAll('.pl').forEach((b,i)=>{const p=D.p[i],g=b.querySelector('.g i');if(p&&g)g.style.width=prog(p)*100+'%';});},500);
+say('あいている はたけを タッチして たねを まこう');draw();
+</script>
+</body>
+</html>

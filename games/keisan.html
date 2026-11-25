@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>けいさん バトル｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#2C2450;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:10px;padding:10px;box-sizing:border-box;color:#fff}#mon{position:relative;min-height:0;display:flex;align-items:center;justify-content:center}#mon svg{height:100%;max-width:100%;max-height:340px}.bar{height:14px;background:rgba(255,255,255,.2);border-radius:10px;overflow:hidden}.bar i{display:block;height:100%;transition:width .25s}.top{position:absolute;left:0;right:0;top:0;display:grid;gap:5px;text-align:center}.q{text-align:center;font-size:clamp(34px,9vw,64px);font-variant-numeric:tabular-nums;line-height:1.1}.an{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.an button{border:0;border-radius:18px;padding:14px 0;font-size:clamp(26px,7vw,44px);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.3);font-variant-numeric:tabular-nums}.hit{animation:hit .3s}@keyframes hit{30%{transform:translateX(14px) rotate(4deg);filter:brightness(1.9)}60%{transform:translateX(-10px)}}.atk{animation:atk .35s}@keyframes atk{50%{transform:scale(1.25)}}</style>
+</head>
+<body>
+<div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">けいさん バトル</h1><div class="score">♥<span id="hp">5</span></div><div class="score">てん<span id="sc">0</span></div></div>
+<div class="board" id="board"><div id="mon"></div><div class="q" id="q"></div><div class="an" id="an"></div><div class="overlay" id="ov"><p class="msg">けいさん バトル</p><p class="sub">こたえを えらんで モンスターを たおそう<br>あかい ゲージが いっぱいに なる まえに！</p><div class="choices" id="ch"></div></div></div></div>
+<script src="../shared/kids.js?v=20261125"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i),R=n=>Math.floor(Math.random()*n);
+const MN=['ぷにょん','もこりん','トゲまる','ひらり','ガオー','ドドン'],MC=['#7ED957','#F78FB3','#B76BE0','#4FC3F7','#FFA24C','#FF6B6B'];
+let mode=0,stg=0,mhp=0,mmax=0,hp=5,sc=0,combo=0,ans=0,g=0,run=false,last=performance.now(),busy=false;
+function mon(i){const k=MC[i%6],t=i%6,eye='<circle cx="80" cy="96" r="13" fill="#fff"/><circle cx="122" cy="96" r="13" fill="#fff"/><circle cx="83" cy="98" r="6" fill="#222"/><circle cx="119" cy="98" r="6" fill="#222"/><path d="M84 128q16 14 34 0" stroke="#222" stroke-width="5" fill="none" stroke-linecap="round"/>';
+ const b=[`<path d="M30 168Q24 60 100 44Q178 60 172 168Q152 184 100 184T30 168z" fill="${k}"/>`,`<g fill="${k}">${Array.from({length:10},(_,j)=>`<circle cx="${100+Math.cos(j*.628)*54}" cy="${112+Math.sin(j*.628)*54}" r="30"/>`).join('')}<circle cx="100" cy="112" r="60"/></g>`,`<path d="${Array.from({length:24},(_,j)=>{const a=j*Math.PI/12,r=j%2?62:88;return(j?'L':'M')+(100+Math.cos(a)*r).toFixed(0)+' '+(112+Math.sin(a)*r).toFixed(0);}).join('')}z" fill="${k}"/>`,`<path d="M46 110Q46 46 100 46T154 110V180l-18-16-18 18-18-18-18 18-18-18-18 16z" fill="${k}"/>`,`<path d="M40 70L30 30L66 48Q100 34 134 48L170 30L160 70Q182 150 100 186Q18 150 40 70z" fill="${k}"/><path d="M84 136l6 14 8-14zM104 136l8 14 6-14z" fill="#fff"/>`,`<rect x="34" y="48" width="132" height="132" rx="26" fill="${k}"/><path d="M34 60L20 34l34 14zM166 60l14-26-34 14z" fill="${k}"/><path d="M60 78l34 10M140 78l-34 10" stroke="#222" stroke-width="7"/>`][t];
+ const crown=i>=6?'<path d="M70 42l6-30 14 18 10-24 10 24 14-18 6 30z" fill="#FFD23F"/>':'';return `<svg viewBox="0 0 200 200" id="ms">${b}${eye}${crown}</svg>`;}
+function start(m){mode=m;stg=0;hp=5;sc=0;combo=0;$('ov').hidden=true;run=true;Kids.blip(800);spawn();}
+function spawn(){mmax=mhp=4+stg;g=0;$('mon').innerHTML=`<div class="top"><div>${MN[stg%6]}${stg>=6?'キング':''}　レベル${stg+1}</div><div class="bar"><i id="mb" style="background:#7ED957"></i></div><div class="bar" style="height:8px"><i id="gb" style="background:#FF5A5A;width:0"></i></div></div>${mon(stg)}`;hud();q();}
+function hud(){$('hp').textContent=hp;$('sc').textContent=sc;const b=$('mb');if(b)b.style.width=mhp/mmax*100+'%';}
+function gen(){const t=mode===3?R(3):mode,h=Math.min(stg,8);let a,b;if(t===0){a=1+R(5+h*3);b=1+R(5+h*2);return[`${a}＋${b}`,a+b];}if(t===1){a=2+R(8+h*2);b=1+R(a);return[`${a}−${b}`,a-b];}a=1+R(Math.min(9,3+h));b=1+R(9);return[`${a}×${b}`,a*b];}
+function q(){busy=false;const[s,v]=gen();ans=v;$('q').textContent=s;const set=new Set([v]);while(set.size<4){const x=v+(R(2)?1:-1)*(1+R(mode>=2?9:4));if(x>=0)set.add(x);}$('an').innerHTML='';Kids.shuffle([...set]).forEach((x,i)=>{const b=document.createElement('button');b.type='button';b.textContent=x;b.style.background=['#E8554A','#2F8FCB','#3BA55D','#9B59B6'][i];b.onclick=()=>pick(b,x);$('an').appendChild(b);});}
+function pick(b,x){if(!run||busy)return;busy=true;const m=$('ms');if(x===ans){combo++;const d=combo>=5?2:1;mhp-=d;sc+=10*d+combo;g=Math.max(0,g-30);hud();m.setAttribute('class','hit');Kids.tone(500+combo*40,.12,'square',.05);b.style.background='#FFD23F';
+   if(mhp<=0){Kids.yay(stg%3===2);Kids.say('たおした！');stg++;if(stg%3===0)hp=Math.min(5,hp+1);setTimeout(()=>run&&spawn(),900);}else setTimeout(()=>{m.removeAttribute('class');q();},380);}
+  else{combo=0;Kids.oops();Kids.shake(b);b.style.opacity=.35;g+=12;setTimeout(()=>busy=false,350);}}
+function tick(dt){if(!run||busy)return;g+=dt*100/Math.max(7,[15,15,17,15][mode]-stg*.6);const e=$('gb');if(e)e.style.width=Math.min(100,g)+'%';if(g>=100){g=0;hp--;combo=0;hud();const m=$('ms');m.setAttribute('class','atk');setTimeout(()=>m.removeAttribute('class'),380);Kids.tone(120,.25,'sawtooth',.05);if(hp<=0){run=false;const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">よく がんばった！</p><p class="sub">たおした かず ${stg}　てん ${sc}</p><div class="choices" id="ch"></div>`;menu();}}}
+function menu(){['たしざん','ひきざん','かけざん','まぜこぜ'].forEach((n,i)=>{const b=document.createElement('button');b.className='choice';b.type='button';b.innerHTML=`<span style="font-size:30px">${['＋','−','×','？'][i]}</span>${n}`;b.onclick=()=>start(i);$('ch').appendChild(b);});}
+function loop(n){tick(Math.min(.1,(n-last)/1000));last=n;requestAnimationFrame(loop);}
+$('mon').innerHTML=mon(0);menu();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

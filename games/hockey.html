@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ふたりホッケー｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#1E88C9;touch-action:none}#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}</style>
+</head>
+<body>
+<div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">ふたりホッケー</h1><div class="score"><b id="a" style="color:#E8342E">0</b>−<b id="b" style="color:#2563C9">0</b></div></div>
+<div class="board" id="board"><canvas id="cv"></canvas><div class="overlay" id="ov"><p class="msg">ふたりホッケー</p><p class="sub">じぶんの がわの マレットを ゆびで うごかして<br>あいての ゴールへ いれよう（５てんで かち）</p><div class="choices" id="ch"></div></div></div></div>
+<script src="../shared/kids.js?v=20261125"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d');
+let W=0,H=0;function fit(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);}new ResizeObserver(fit).observe($("board"));fit();
+// いつも縦長の台として計算し、横長の画面では90度まわして描く
+const TW=360,TH=640,GW=130;let P,M,s=[0,0],mode=0,run=false,wait=0,parts=[],ptr={},rot=false,Z=1,ox=0,oy=0;
+function view(){rot=W>H;const w=rot?H:W,h=rot?W:H;Z=Math.min((w-8)/TW,(h-8)/TH);}
+function toT(e){const r=cv.getBoundingClientRect();let x=e.clientX-r.left-W/2,y=e.clientY-r.top-H/2;if(rot){const t=x;x=y;y=-t;}return{x:x/Z+TW/2,y:y/Z+TH/2};}
+function reset(side){P={x:TW/2+(Math.random()-.5)*60,y:TH/2+(side===undefined?55:side?-70:70),vx:0,vy:0,r:17};M=[{x:TW/2,y:TH-90,tx:TW/2,ty:TH-90,r:32,vx:0,vy:0},{x:TW/2,y:90,tx:TW/2,ty:90,r:32,vx:0,vy:0}];wait=50;ghost=0;}
+function start(m){mode=m;s=[0,0];parts=[];ptr={};reset();run=true;$('ov').hidden=true;hud();Kids.blip(800);}
+function hud(){$('a').textContent=s[0];$('b').textContent=s[1];}
+function goal(i){s[i]++;hud();Kids.yay(false);for(let k=0;k<30;k++)parts.push({x:P.x,y:i?TH-5:5,vx:(Math.random()-.5)*8,vy:(i?-1:1)*Math.random()*8,l:40,c:i?'#58B7FF':'#FF7B7B'});if(s[i]>=5){run=false;Kids.yay();setTimeout(()=>{const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">${mode?(i?'あおの かち！':'あかの かち！'):(i?'コンピューターの かち':'あなたの かち！')}</p><p class="sub">${s[0]} − ${s[1]}</p><div class="choices" id="ch"></div>`;menu();},700);}else reset(i===0);}
+function step(){if(wait>0){wait--;}
+  if(!mode){const m=M[1],lv=aiLv,sp=[2.6,4,5.6][lv];let tx=TW/2,ty=80;if(P.y<TH/2+20){tx=P.x+P.vx*4;ty=P.vy<=0.5&&P.y>60?P.y-26:80;if(P.y<m.y-6){ty=30;tx=P.x>TW/2?P.x-50:P.x+50;}}else tx=TW/2+(P.x-TW/2)*.5;const dx=tx-m.tx,dy=ty-m.ty,d=Math.hypot(dx,dy)||1;m.tx+=dx/d*Math.min(sp,d);m.ty+=dy/d*Math.min(sp,d);}
+  M.forEach((m,i)=>{m.tx=Math.max(m.r,Math.min(TW-m.r,m.tx));m.ty=i?Math.max(m.r,Math.min(TH/2-m.r-19,m.ty)):Math.max(TH/2+m.r+19,Math.min(TH-m.r,m.ty));const nx=m.x+(m.tx-m.x)*.55,ny=m.y+(m.ty-m.y)*.55;m.vx=nx-m.x;m.vy=ny-m.y;m.x=nx;m.y=ny;});
+  for(let k=0;k<2&&run;k++){P.x+=P.vx/2;P.y+=P.vy/2;const ing=Math.abs(P.x-TW/2)<GW/2-4;
+    if(P.x<P.r){P.x=P.r;P.vx=Math.abs(P.vx)*.94;Kids.tone(500,.03,'square',.02);}if(P.x>TW-P.r){P.x=TW-P.r;P.vx=-Math.abs(P.vx)*.94;Kids.tone(500,.03,'square',.02);}
+    if(!ing){if(P.y<P.r){P.y=P.r;P.vy=Math.abs(P.vy)*.94;}if(P.y>TH-P.r){P.y=TH-P.r;P.vy=-Math.abs(P.vy)*.94;}}
+    else{if(P.y<-P.r){goal(0);return;}if(P.y>TH+P.r){goal(1);return;}}
+    const rc=64;[[rc,rc],[TW-rc,rc],[rc,TH-rc],[TW-rc,TH-rc]].forEach(([x,y],i)=>{const ix=i%2?P.x>x:P.x<x,iy=i>1?P.y>y:P.y<y;if(ix&&iy&&!ing){const dx=P.x-x,dy=P.y-y,d=Math.hypot(dx,dy);if(d>rc-P.r){const nx=dx/d,ny=dy/d;P.x=x+nx*(rc-P.r);P.y=y+ny*(rc-P.r);const v=P.vx*nx+P.vy*ny;if(v>0){P.vx-=1.9*v*nx;P.vy-=1.9*v*ny;}}}});
+    if(ghost<=0)M.forEach(m=>{const dx=P.x-m.x,dy=P.y-m.y,d=Math.hypot(dx,dy)||.01,R=P.r+m.r;if(d<R){const nx=dx/d,ny=dy/d;P.x=m.x+nx*R;P.y=m.y+ny*R;const rv=(P.vx-m.vx)*nx+(P.vy-m.vy)*ny;if(rv<0){P.vx-=1.75*rv*nx;P.vy-=1.75*rv*ny;Kids.tone(260,.05,'triangle',.07);}P.x=Math.max(P.r,Math.min(TW-P.r,P.x));}});}
+  const v=Math.hypot(P.vx,P.vy),mx=15;if(v>mx){P.vx*=mx/v;P.vy*=mx/v;}P.vx*=.993;P.vy*=.993;
+  // はしで とまったら すこし まんなかへ
+  if(ghost>0)ghost--;mid=Math.abs(P.y-TH/2)<45?mid+1:0;if(mid>150){mid=0;ghost=24;P.vx=(Math.random()-.5)*8;P.vy=(Math.random()<.5?-1:1)*8;}const mv=Math.hypot(P.x-(P.ox||0),P.y-(P.oy||0));P.ox=P.x;P.oy=P.y;if(mv<.5){stuck++;if(stuck>45&&Math.abs(P.y-TH/2)>60&&M.some(m=>Math.hypot(P.x-m.x,P.y-m.y)<P.r+m.r+3)){ghost=26;const a=Math.atan2(TH/2-P.y,TW/2-P.x);P.vx=Math.cos(a)*6;P.vy=Math.sin(a)*6;stuck=0;}else if(stuck>45&&Math.abs(P.y-TH/2)<60){P.vx+=(TW/2-P.x)*.02+(Math.random()-.5);P.vy+=(Math.random()<.5?-1:1)*2.4;stuck=0;}}else stuck=0;
+  parts=parts.filter(p=>(p.x+=p.vx,p.y+=p.vy,p.l-->0));}
+let stuck=0,aiLv=1,ghost=0,mid=0;
+function draw(){view();c.clearRect(0,0,W,H);c.save();c.translate(W/2,H/2);if(rot)c.rotate(Math.PI/2);c.scale(rot?Z:Z,Z);c.translate(-TW/2,-TH/2);
+  c.fillStyle='#EAF7FF';c.beginPath();c.roundRect(-4,-4,TW+8,TH+8,26);c.fill();c.strokeStyle='#8CCBEA';c.lineWidth=5;c.beginPath();c.moveTo(0,TH/2);c.lineTo(TW,TH/2);c.stroke();c.beginPath();c.arc(TW/2,TH/2,58,0,7);c.stroke();
+  [[0,'#2563C9'],[TH,'#E8342E']].forEach(([y,k])=>{c.fillStyle=k;c.fillRect(TW/2-GW/2,y-6,GW,12);c.strokeStyle=k+'66';c.beginPath();c.arc(TW/2,y,80,y?Math.PI:0,y?0:Math.PI);c.stroke();});
+  if(P){M.forEach((m,i)=>{c.fillStyle='rgba(0,0,0,.15)';c.beginPath();c.arc(m.x+3,m.y+5,m.r,0,7);c.fill();c.fillStyle=i?'#2563C9':'#E8342E';c.beginPath();c.arc(m.x,m.y,m.r,0,7);c.fill();c.fillStyle=i?'#6FA3F5':'#FF8A80';c.beginPath();c.arc(m.x,m.y,m.r*.55,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(m.x-6,m.y-4,4,0,7);c.arc(m.x+6,m.y-4,4,0,7);c.fill();c.fillStyle='#222';c.beginPath();c.arc(m.x-6,m.y-4,2,0,7);c.arc(m.x+6,m.y-4,2,0,7);c.fill();});
+    c.fillStyle='#FFC83D';c.beginPath();c.arc(P.x,P.y,P.r,0,7);c.fill();c.lineWidth=4;c.strokeStyle='#E0A800';c.stroke();}
+  parts.forEach(p=>{c.globalAlpha=Math.max(0,p.l/40);c.fillStyle=p.c;c.beginPath();c.arc(p.x,p.y,5,0,7);c.fill();});c.globalAlpha=1;c.restore();}
+cv.addEventListener('pointerdown',e=>{if(!run)return;view();const t=toT(e),i=t.y<TH/2?1:0;if(i&&!mode)return;try{cv.setPointerCapture(e.pointerId);}catch(_){}ptr[e.pointerId]=i;M[i].tx=t.x;M[i].ty=t.y;});
+cv.addEventListener('pointermove',e=>{const i=ptr[e.pointerId];if(i===undefined||!run)return;const t=toT(e);M[i].tx=t.x;M[i].ty=t.y;});['pointerup','pointercancel'].forEach(n=>cv.addEventListener(n,e=>delete ptr[e.pointerId]));
+function menu(){[['ひとりで（よわい）',0,0],['ひとりで（ふつう）',0,1],['ひとりで（つよい）',0,2],['ふたりで たいせん',1,0]].forEach(([n,m,l])=>{const b=document.createElement('button');b.className='choice';b.type='button';b.textContent=n;b.onclick=()=>{aiLv=l;start(m);};$('ch').appendChild(b);});}
+let acc=0,last=performance.now();function loop(n){acc+=Math.min(60,n-last);last=n;while(acc>16.6){acc-=16.6;if(run)step();else parts=parts.filter(p=>(p.x+=p.vx,p.y+=p.vy,p.l-->0));}if(W)draw();requestAnimationFrame(loop);}
+reset();menu();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
