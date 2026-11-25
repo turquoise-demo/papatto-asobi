@@ -1,131 +1,56 @@
 <!doctype html>
 <html lang="ja">
 <head>
+<title>おそろいつなぎ｜ぱぱっとあそび</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>おそろいドロップ｜ぱぱっとあそび</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
 <link rel="stylesheet" href="../shared/kids.css?v=20261125">
 <style>
-.board{background:#0F6E6A;display:grid;grid-template-rows:1fr auto;touch-action:none}
-.play{display:flex;justify-content:center;align-items:center;gap:14px;min-height:0;padding:12px 12px 0}
-#well{height:100%;aspect-ratio:1/2;max-width:62vw;display:flex;align-items:flex-start;justify-content:center;position:relative}
-#cv{border-radius:12px;background:#E9FBF6;box-shadow:0 0 0 4px #0A4F4C}
-.side{display:flex;flex-direction:column;gap:10px;color:#fff;align-self:flex-start;min-width:84px}
-.box{background:#0A5754;border-radius:14px;padding:8px 10px;text-align:center}
-.box small{display:block;font-size:11px;color:#9FE3D9;letter-spacing:.1em}
-.box b{font-size:22px;font-variant-numeric:tabular-nums}
-#next{width:44px;height:88px;display:block;margin:4px auto 0}
-.chain{position:absolute;left:0;right:0;top:35%;text-align:center;font-size:clamp(26px,6vw,44px);color:#FFC83D;-webkit-text-stroke:2px #1F2A44;paint-order:stroke;pointer-events:none;animation:popin .4s}
-.pads{padding-bottom:12px}
+.board{background:#DDF5EC;touch-action:none;display:grid;grid-template-rows:auto 1fr;justify-items:center}
+.want{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:12px 10px 4px}
+.want div{background:#fff;border-radius:16px;padding:6px 12px;display:flex;align-items:center;gap:6px;font-size:20px;box-shadow:0 4px 0 rgba(0,0,0,.1);font-variant-numeric:tabular-nums}
+.want svg{width:32px;height:32px}.want .ok{background:#C9F0B5}
+#well{width:100%;min-height:0;display:flex;align-items:center;justify-content:center}
+#cv{touch-action:none}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="topbar">
-    <a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a>
-    <h1 class="title">おそろいドロップ</h1>
-    <button class="hbtn" id="pause">ていし</button>
-  </div>
-  <div class="board" id="board">
-    <div class="play">
-      <div id="well"><canvas id="cv"></canvas></div>
-      <div class="side">
-        <div class="box"><small>つぎ</small><canvas id="next" width="88" height="176"></canvas></div>
-        <div class="box"><small>てん</small><b id="sc">0</b></div>
-        <div class="box"><small>さいだい れんさ</small><b id="mx">0</b></div>
-      </div>
-    </div>
-    <div class="pads">
-      <div class="pad">
-        <button class="ctl" id="L" aria-label="ひだり"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#1F2A44" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <button class="ctl" id="R" aria-label="みぎ"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="#1F2A44" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <button class="ctl" id="D" aria-label="はやく おとす"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7" fill="none" stroke="#1F2A44" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      </div>
-      <div class="pad">
-        <button class="ctl" id="A" aria-label="ひだりに まわす"><svg viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="3" stroke-linecap="round"><path d="M5 12a7 7 0 1 0 2.1-5M5 4v4h4"/></svg></button>
-        <button class="ctl yellow" id="B" aria-label="みぎに まわす"><svg viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="3" stroke-linecap="round"><path d="M19 12a7 7 0 1 1-2.1-5M19 4v4h-4"/></svg></button>
-      </div>
-    </div>
-    <div class="overlay" id="ov">
-      <p class="msg">おそろいドロップ</p>
-      <p class="sub">おなじ えを 4つ くっつけると きえるよ<br>つづけて きえると「れんさ」！</p>
-      <div class="choices" id="lvls"></div>
-    </div>
-  </div>
+  <div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">おそろいつなぎ</h1><div class="score">のこり <span id="mv">0</span></div></div>
+  <div class="board" id="board"><div class="want" id="want"></div><div id="well"><canvas id="cv"></canvas></div>
+    <div class="overlay" id="ov"><p class="msg">おそろいつなぎ</p><p class="sub">おなじ えを ゆびで 3つ いじょう つないで<br>ちゅうもんの かずを あつめよう（ななめも OK）</p><button class="big" id="go" type="button">はじめる</button></div></div>
 </div>
 <script src="../shared/kids.js?v=20261125"></script>
 <script>
 document.getElementById('home').innerHTML=Kids.homeIcon;
-const COLS=6,ROWS=12,cv=document.getElementById('cv'),c=cv.getContext('2d'),nc=document.getElementById('next').getContext('2d'),well=document.getElementById('well');
-const KINDS=[['apple','#FFD9D6'],['star','#FFF1B8'],['fish','#D4F0FF'],['heart','#FFDDEB'],['flower','#E9DDFF']];
-const IMG=KINDS.map(([k])=>{const im=new Image();im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${Kids.icon(k).replace(/^<svg[^>]*>|<\/svg>$/g,'')}</svg>`);return im;});
-let grid,cur,nextP,nKinds=4,speed=800,acc=0,last=0,run=false,paused=false,state='fall',stT=0,chain=0,maxChain=0,score=0,popSet=null,CELL=40;
-const DIR=[[0,-1],[1,0],[0,1],[-1,0]];
-function fit(){const r=well.getBoundingClientRect();CELL=Math.max(10,Math.floor(Math.min(r.height/ROWS,r.width/COLS)));cv.style.width=CELL*COLS+'px';cv.style.height=CELL*ROWS+'px';
-  cv.width=CELL*COLS*devicePixelRatio;cv.height=CELL*ROWS*devicePixelRatio;c.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);draw();}
-new ResizeObserver(fit).observe(well);
-const rnd=()=>Math.floor(Math.random()*nKinds);
-const pair=()=>({x:2,y:1,r:0,a:rnd(),b:rnd()});
-const child=p=>[p.x+DIR[p.r][0],p.y+DIR[p.r][1]];
-const free=(x,y)=>x>=0&&x<COLS&&y<ROWS&&(y<0||grid[y][x]<0);
-const fits=p=>free(p.x,p.y)&&free(...child(p));
-function move(d){const p={...cur,x:cur.x+d};if(fits(p)){cur=p;Kids.tone(320,.03,'square',.02);}}
-function rot(d){const p={...cur,r:(cur.r+d+4)%4};if(fits(p)){cur=p;}else{const k=-DIR[p.r][0];const q={...p,x:p.x+k};const u={...p,y:p.y-1};
-  if(k&&fits(q))cur=q;else if(fits(u))cur=u;else return;}Kids.tone(660,.04,'square',.03);}
-function down(){const p={...cur,y:cur.y+1};if(fits(p)){cur=p;score++;}else land();acc=0;}
-function land(){const[cx,cy]=child(cur);if(cur.y>=0)grid[cur.y][cur.x]=cur.a;if(cy>=0)grid[cy][cx]=cur.b;cur=null;state='settle';stT=0;chain=0;Kids.tone(200,.06,'triangle',.06);}
-function gravityStep(){let moved=false;for(let y=ROWS-2;y>=0;y--)for(let x=0;x<COLS;x++){if(grid[y][x]>=0&&grid[y+1][x]<0){grid[y+1][x]=grid[y][x];grid[y][x]=-1;moved=true;}}return moved;}
-function findGroups(){const seen=new Set(),out=[];
-  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const k=grid[y][x];if(k<0||seen.has(y*COLS+x))continue;const g=[],st=[[x,y]];seen.add(y*COLS+x);
-    while(st.length){const[a,b]=st.pop();g.push([a,b]);for(const[dx,dy]of DIR){const nx=a+dx,ny=b+dy;if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS&&!seen.has(ny*COLS+nx)&&grid[ny][nx]===k){seen.add(ny*COLS+nx);st.push([nx,ny]);}}}
-    if(g.length>=4)out.push(...g);}
-  return out;}
-function spawn(){cur=nextP;nextP=pair();drawNext();if(!fits(cur)||grid[0][2]>=0){over();}}
-function step(dt){
-  if(state==='fall'){acc+=dt;if(acc>=speed){acc=0;down();}}
-  else if(state==='settle'){stT+=dt;if(stT>45){stT=0;if(!gravityStep()){const g=findGroups();
-    if(g.length){chain++;popSet=g;state='pop';stT=0;const bonus=[1,1,3,6,10,15,20][Math.min(chain,6)];score+=g.length*10*bonus;
-      Kids.tone(440*Math.pow(1.12,chain),.18,'triangle',.09);if(chain>=2)showChain(chain);if(chain>maxChain)maxChain=chain;hud();}
-    else{state='fall';acc=0;spawn();}}}}
-  else if(state==='pop'){stT+=dt;if(stT>380){popSet.forEach(([x,y])=>grid[y][x]=-1);popSet=null;state='settle';stT=0;}}
-}
-function showChain(n){const d=document.createElement('div');d.className='chain';d.textContent=n+'れんさ！';well.appendChild(d);setTimeout(()=>d.remove(),900);if(n>=3){Kids.confetti();Kids.say(n+'れんさ');}}
-function hud(){document.getElementById('sc').textContent=score;document.getElementById('mx').textContent=maxChain;}
-function tile(ctx,x,y,k,s,alpha=1,sc=1){ctx.save();ctx.globalAlpha=alpha;ctx.translate(x+s/2,y+s/2);ctx.scale(sc,sc);
-  ctx.fillStyle=KINDS[k][1];ctx.beginPath();ctx.roundRect(-s/2+2,-s/2+2,s-4,s-4,s*.28);ctx.fill();
-  if(IMG[k].complete)ctx.drawImage(IMG[k],-s*.4,-s*.4,s*.8,s*.8);ctx.restore();}
-function draw(){
-  const W=CELL*COLS,H=CELL*ROWS;c.clearRect(0,0,W,H);if(!grid)return;
-  c.fillStyle='rgba(15,110,106,.06)';for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)if((x+y)%2)c.fillRect(x*CELL,y*CELL,CELL,CELL);
-  c.strokeStyle='#FF6B6B';c.setLineDash([6,6]);c.lineWidth=2;c.strokeRect(2*CELL+3,3,CELL-6,CELL-6);c.setLineDash([]);
-  const blink=popSet?Math.sin(stT/40)>0:false;
-  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const k=grid[y][x];if(k<0)continue;const p=popSet&&popSet.some(([a,b])=>a===x&&b===y);
-    tile(c,x*CELL,y*CELL,k,CELL,p?(1-stT/400):1,p?(1+stT/900):1);if(p&&blink){c.fillStyle='rgba(255,255,255,.6)';c.beginPath();c.roundRect(x*CELL+2,y*CELL+2,CELL-4,CELL-4,CELL*.28);c.fill();}}
-  if(cur){const[cx,cy]=child(cur);if(cur.y>=0)tile(c,cur.x*CELL,cur.y*CELL,cur.a,CELL);if(cy>=0)tile(c,cx*CELL,cy*CELL,cur.b,CELL);
-    c.strokeStyle='#1F2A44';c.lineWidth=3;c.beginPath();c.roundRect(cur.x*CELL+2,cur.y*CELL+2,CELL-4,CELL-4,CELL*.28);c.stroke();}
-  if(paused){c.fillStyle='rgba(0,0,0,.5)';c.fillRect(0,0,W,H);c.fillStyle='#fff';c.font=`800 ${CELL*.6}px 'M PLUS Rounded 1c',sans-serif`;c.textAlign='center';c.fillText('ていし ちゅう',W/2,H/2);}
-}
-function drawNext(){nc.clearRect(0,0,88,176);if(nextP){tile(nc,0,0,nextP.b,88);tile(nc,0,88,nextP.a,88);}}
-function loop(t){if(!run)return;const dt=Math.min(60,t-last);last=t;if(!paused)step(dt);draw();requestAnimationFrame(loop);}
-function over(){run=false;Kids.oops();const o=document.getElementById('ov');o.hidden=false;o.innerHTML=`<p class="msg">おしまい！</p><p class="sub">てん ${score}　さいだい ${maxChain}れんさ</p><div class="choices" id="lvls"></div>`;buildLv();}
-function start(k,sp){nKinds=k;speed=sp;grid=Array.from({length:ROWS},()=>Array(COLS).fill(-1));score=0;maxChain=0;chain=0;state='fall';popSet=null;nextP=pair();spawn();hud();
-  document.getElementById('ov').hidden=true;run=true;paused=false;last=performance.now();acc=0;Kids.blip(800);requestAnimationFrame(loop);}
-function buildLv(){const box=document.getElementById('lvls');[[3,900,'かんたん','3しゅるい'],[4,750,'ふつう','4しゅるい'],[5,560,'むずかしい','5しゅるい']].forEach(([k,sp,n,s],i)=>{
-  const b=document.createElement('button');b.className='choice';b.innerHTML=`${'★'.repeat(i+1)}<span>${n}</span><small>${s}</small>`;b.onclick=()=>start(k,sp);box.appendChild(b);});}
-const act=f=>()=>{if(run&&!paused&&state==='fall'&&cur){f();draw();}};
-Kids.hold(document.getElementById('L'),act(()=>move(-1)),{repeat:80});
-Kids.hold(document.getElementById('R'),act(()=>move(1)),{repeat:80});
-Kids.hold(document.getElementById('D'),act(down),{repeat:40,delay:60});
-Kids.hold(document.getElementById('A'),act(()=>rot(-1)));
-Kids.hold(document.getElementById('B'),act(()=>rot(1)));
-addEventListener('keydown',e=>{const m={ArrowLeft:()=>move(-1),ArrowRight:()=>move(1),ArrowDown:down,ArrowUp:()=>rot(1),z:()=>rot(-1),x:()=>rot(1)};
-  if(m[e.key]){e.preventDefault();act(m[e.key])();}if(e.key==='p'||e.key==='Escape')togglePause();});
-function togglePause(){if(run){paused=!paused;draw();}}
-document.getElementById('pause').onclick=togglePause;
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&run)paused=true;});
-IMG.forEach(im=>im.onload=()=>draw());
-buildLv();
+const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d'),C=6,R=7;
+const K=['apple','star','fish','flower','banana'],BG=['#FFD9D6','#FFF1B8','#D4F0FF','#E9DDFF','#FFF6C7'];
+const IMG=K.map(k=>{const i=new Image();i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(Kids.icon(k).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" '));return i;});
+let g=[],path=[],want=[],moves=0,level=1,S=50,run=false,busy=false,ptr=null;
+const well=$('well');new ResizeObserver(()=>{const r=well.getBoundingClientRect();S=Math.floor(Math.min((r.width-16)/C,(r.height-16)/R));cv.style.width=S*C+'px';cv.style.height=S*R+'px';const d=Math.min(devicePixelRatio||1,2);cv.width=S*C*d;cv.height=S*R*d;c.setTransform(d,0,0,d,0,0);}).observe(well);
+const rnd=()=>Math.floor(Math.random()*K.length);
+function has(){for(let y=0;y<R;y++)for(let x=0;x<C;x++){let n=0;for(let a=-1;a<2;a++)for(let b=-1;b<2;b++)if((a||b)&&g[y+a]&&g[y+a][x+b]&&g[y+a][x+b].k===g[y][x].k)n++;if(n>=2)return true;}return false;}
+function fill(){do{g=Array.from({length:R},()=>Array.from({length:C},()=>({k:rnd(),o:0})));}while(!has());}
+function start(lv){level=lv;fill();path=[];const ks=Kids.shuffle(K.map((_,i)=>i)).slice(0,Math.min(4,1+lv));want=ks.map(k=>({k,n:8+lv*2}));moves=12+lv*3;run=true;busy=false;$('ov').hidden=true;hud();Kids.blip(800);}
+function hud(){$('mv').textContent=moves;$('want').innerHTML=want.map(w=>`<div class="${w.n<=0?'ok':''}">${Kids.icon(K[w.k])}${Math.max(0,w.n)}</div>`).join('');}
+function at(e){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/S,y=(e.clientY-r.top)/S,cx=Math.floor(x),cy=Math.floor(y);if(cx<0||cy<0||cx>=C||cy>=R||Math.hypot(x-cx-.5,y-cy-.5)>.42)return null;return{x:cx,y:cy};}
+function add(p){if(!p)return;const i=path.findIndex(q=>q.x===p.x&&q.y===p.y);if(i>=0){if(i===path.length-2)path.pop();return;}
+  const l=path[path.length-1];if(!l||(Math.abs(l.x-p.x)<2&&Math.abs(l.y-p.y)<2&&g[p.y][p.x].k===g[l.y][l.x].k)){path.push(p);Kids.tone(380*Math.pow(1.08,path.length),.09,'triangle',.06);}}
+cv.addEventListener('pointerdown',e=>{if(!run||busy||ptr!==null)return;ptr=e.pointerId;try{cv.setPointerCapture(ptr);}catch(_){}path=[];add(at(e));});
+cv.addEventListener('pointermove',e=>{if(e.pointerId===ptr)add(at(e));});
+const up=e=>{if(e.pointerId!==ptr)return;ptr=null;if(path.length>=3)pop();path=[];};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',e=>{if(e.pointerId===ptr){ptr=null;path=[];}});
+function pop(){const k=g[path[0].y][path[0].x].k,n=path.length;moves--;const w=want.find(w=>w.k===k);if(w)w.n-=n>=5?n+2:n;
+  path.forEach(p=>g[p.y][p.x]=null);if(n>=5){Kids.yay(false);Kids.say('すごい！');}else Kids.pop();
+  for(let x=0;x<C;x++){let wy=R-1;for(let y=R-1;y>=0;y--)if(g[y][x]){const t=g[y][x];g[y][x]=null;t.o=wy-y+t.o;g[wy][x]=t;wy--;}const m=wy+1;for(let y=wy;y>=0;y--)g[y][x]={k:rnd(),o:m};}
+  if(!has())fill();hud();
+  if(want.every(w=>w.n<=0)){run=false;Kids.yay();Kids.say('ちゅうもん かんりょう！');setTimeout(()=>over('できたね！','つぎへ',level+1),900);}
+  else if(moves<=0){run=false;Kids.oops();setTimeout(()=>over('あと すこし！','もういちど',level),700);}}
+function over(m,b,lv){const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">${m}</p><p class="sub">レベル ${level}</p><button class="big" id="go" type="button">${b}</button>`;$('go').onclick=()=>start(lv);}
+function loop(t){requestAnimationFrame(loop);c.clearRect(0,0,S*C,S*R);if(!g.length)return;
+  for(let y=0;y<R;y++)for(let x=0;x<C;x++){const q=g[y][x];if(!q)continue;q.o=Math.max(0,q.o-.22);const on=path.some(p=>p.x===x&&p.y===y),s=on?.92+Math.sin(t/90)*.05:.84;c.save();c.translate((x+.5)*S,(y+.5-q.o)*S);c.scale(s,s);c.fillStyle=BG[q.k];c.beginPath();c.arc(0,0,S*.5,0,7);c.fill();if(on){c.lineWidth=4;c.strokeStyle='#2E9E4F';c.stroke();}c.drawImage(IMG[q.k],-S*.34,-S*.34,S*.68,S*.68);c.restore();}
+  if(path.length>1){c.strokeStyle='rgba(46,158,79,.55)';c.lineWidth=S*.14;c.lineCap=c.lineJoin='round';c.beginPath();path.forEach((p,i)=>c[i?'lineTo':'moveTo']((p.x+.5)*S,(p.y+.5)*S));c.stroke();}}
+$('go').onclick=()=>start(1);fill();requestAnimationFrame(loop);
 </script>
 </body>
 </html>
