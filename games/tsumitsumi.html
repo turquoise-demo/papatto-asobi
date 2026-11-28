@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
-<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
 <style>
 .board{background:#FFE9EF;touch-action:none}
 #cv{position:absolute;inset:0;width:100%;height:100%}
@@ -14,6 +14,7 @@
 .order i{display:block;width:74px;height:18px;border-radius:7px;border:3px solid transparent;opacity:.45}
 .order i.now{border-color:#1F2A44;opacity:1}.order i.ok{opacity:1}
 .pads{position:absolute;left:0;right:0;bottom:0;z-index:3;justify-content:center;gap:16px;padding-bottom:14px}
+@media (orientation:landscape) and (max-height:540px){.order{font-size:12px;padding:6px 8px;left:8px;top:8px}.order i{width:54px;height:11px;border-width:2px}}
 </style>
 </head>
 <body>
@@ -25,7 +26,7 @@
     <div class="overlay" id="ov"><p class="msg">つみつみケーキ</p><p class="sub">ちゅうもんの じゅんばんに ケーキを かさねよう<br>ちがう あじは「いらない」。かたむくと くずれるよ</p><button class="big" id="go" type="button">はじめる</button></div>
   </div>
 </div>
-<script src="../shared/kids.js?v=20261125"></script>
+<script src="../shared/kids.js?v=20261128"></script>
 <script>
 document.getElementById('home').innerHTML=Kids.homeIcon;
 const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d'),board=$('board');

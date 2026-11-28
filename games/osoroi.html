@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
-<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
 <style>
 .board{background:#DDF5EC;touch-action:none;display:grid;grid-template-rows:auto 1fr;justify-items:center}
 .want{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:12px 10px 4px}
@@ -13,6 +13,7 @@
 .want svg{width:32px;height:32px}.want .ok{background:#C9F0B5}
 #well{width:100%;min-height:0;display:flex;align-items:center;justify-content:center}
 #cv{touch-action:none}
+@media (orientation:landscape) and (max-height:540px){.board{grid-template-rows:minmax(0,1fr);grid-template-columns:auto minmax(0,1fr)}.want{flex-direction:column;flex-wrap:nowrap;justify-content:center;padding:8px 0 8px 10px}.want div{font-size:17px}.want svg{width:26px;height:26px}#well{height:100%}}
 </style>
 </head>
 <body>
@@ -21,7 +22,7 @@
   <div class="board" id="board"><div class="want" id="want"></div><div id="well"><canvas id="cv"></canvas></div>
     <div class="overlay" id="ov"><p class="msg">おそろいつなぎ</p><p class="sub">おなじ えを ゆびで 3つ いじょう つないで<br>ちゅうもんの かずを あつめよう（ななめも OK）</p><button class="big" id="go" type="button">はじめる</button></div></div>
 </div>
-<script src="../shared/kids.js?v=20261125"></script>
+<script src="../shared/kids.js?v=20261128"></script>
 <script>
 document.getElementById('home').innerHTML=Kids.homeIcon;
 const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d'),C=6,R=7;

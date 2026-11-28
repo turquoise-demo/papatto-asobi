@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ふわっと シュート｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
+<style>
+.board{background:#F7E7CF;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.tip{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:15px;color:#7A5A3A;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">ふわっと シュート</h1><div class="score">ゴール <b id="g">0</b></div><div class="score">のこり <b id="left">10</b></div></div>
+  <div class="board" id="board"><canvas id="cv"></canvas><p class="tip" id="tip">ボールを うえへ はじいて ゴールを ねらおう</p>
+    <div class="overlay" id="ov"><p class="msg">ふわっと シュート</p><p class="sub">ゆびで ボールを うえに はらう<br>つよく はらうと たかく とぶよ（10かい）</p><div class="choices" id="ch"></div></div>
+  </div>
+</div>
+<script src="../shared/kids.js?v=20261128"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d'),board=$('board');
+let W=0,H=0,R=20,hx=0,hy=0,hw=40,rr=4,hdir=1,hsp=0,ball=null,drag=null,shots=10,goals=0,lv=0,run=false,state='rest',scored=false,t0=0,last=0,parts=[],msg=null;
+const best=()=>+(localStorage.getItem('basket-best-'+lv)||0);
+function fit(){const r=board.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);R=Math.max(14,Math.min(W,H)*.06);hw=R*1.85;rr=R*.22;hy=H*.3;if(!hx)hx=W/2;hx=Math.min(Math.max(hx,hw+R*2),W-hw-R*2);if(state==='rest')home();}
+new ResizeObserver(fit).observe(board);
+const G=()=>H*.0011;
+function home(){ball={x:W/2,y:H-R*2.6,vx:0,vy:0,rot:0};state='rest';scored=false;}
+function pt(e){const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top,t:performance.now()};}
+cv.addEventListener('pointerdown',e=>{if(!run||state!=='rest')return;try{cv.setPointerCapture(e.pointerId);}catch(_){}drag={a:pt(e),b:pt(e)};});
+cv.addEventListener('pointermove',e=>{if(drag)drag.b=pt(e);});
+cv.addEventListener('pointerup',e=>{if(!drag)return;const a=drag.a,b=pt(e);drag=null;shoot(b.x-a.x,b.y-a.y);});
+cv.addEventListener('pointercancel',()=>drag=null);
+function shoot(dx,dy){
+  if(dy>-18)return; // うえに はらって いない
+  const g=G(),rise=ball.y-hy,f=Math.min(1.35,Math.max(.55,-dy/(H*.32)));
+  const apex=(rise+R*3)*f,vy=-Math.sqrt(2*g*apex);
+  const T=apex>rise?(-vy+Math.sqrt(vy*vy-2*g*rise))/g:2*-vy/g;
+  const tx=ball.x+dx/(-dy)*rise;ball.vx=(tx-ball.x)/T;ball.vy=vy;state='fly';shots--;$('left').textContent=shots;$('tip').hidden=true;Kids.tone(300,.12,'sine',.08,0,2);
+}
+function rim(px){const dx=ball.x-px,dy=ball.y-hy,d=Math.hypot(dx,dy),m=R+rr;if(d<m&&d>0){const nx=dx/d,ny=dy/d;ball.x=px+nx*m;ball.y=hy+ny*m;const vn=ball.vx*nx+ball.vy*ny;if(vn<0){ball.vx-=1.55*vn*nx;ball.vy-=1.55*vn*ny;Kids.tone(180,.05,'square',.03);}}}
+function step(k){
+  if(hsp&&W){hx+=hdir*hsp*k;if(hx>W-hw-R*2||hx<hw+R*2)hdir*=-1;}
+  if(state!=='fly')return;
+  const py=ball.y;ball.vy+=G()*k;ball.x+=ball.vx*k;ball.y+=ball.vy*k;ball.rot+=ball.vx*.02*k;
+  rim(hx-hw);rim(hx+hw);
+  if(ball.x<R){ball.x=R;ball.vx=Math.abs(ball.vx)*.6;}if(ball.x>W-R){ball.x=W-R;ball.vx=-Math.abs(ball.vx)*.6;}
+  if(ball.y<R){ball.y=R;ball.vy=Math.abs(ball.vy)*.5;}
+  if(!scored&&py<hy&&ball.y>=hy&&ball.vy>0&&Math.abs(ball.x-hx)<hw-rr){scored=true;goals++;$('g').textContent=goals;Kids.yay(false);Kids.say(['ナイス！','ゴール！','すごい！'][goals%3]);burst();msg={t:'ゴール！',a:1};if(lv>0)hsp=Math.min(W*.006,(hsp||W*.0015)+W*.0006*lv);}
+  if(ball.y>H+R*3||(ball.vy>0&&ball.y>H-R&&!scored&&Math.abs(ball.vy)<1)){state='done';t0=performance.now();if(!scored){Kids.oops();msg={t:'おしい！',a:1};}}
+}
+function burst(){for(let i=0;i<26;i++){const a=Math.random()*Math.PI*2,s=2+Math.random()*4;parts.push({x:hx,y:hy,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,l:1,c:['#E8342E','#FFD23F','#4FC3F7','#2E9E4F','#F78FB3'][i%5]});}}
+function drawBall(){const b=ball;c.save();c.translate(b.x,b.y);c.rotate(b.rot);c.fillStyle='#F7931E';c.beginPath();c.arc(0,0,R,0,7);c.fill();c.strokeStyle='#8A4A12';c.lineWidth=Math.max(2,R*.09);c.beginPath();c.arc(0,0,R,0,7);c.moveTo(-R,0);c.lineTo(R,0);c.moveTo(0,-R);c.lineTo(0,R);c.stroke();c.beginPath();c.arc(-R*1.3,0,R*.95,-.9,.9);c.stroke();c.beginPath();c.arc(R*1.3,0,R*.95,Math.PI-.9,Math.PI+.9);c.stroke();c.restore();}
+function draw(){
+  c.clearRect(0,0,W,H);
+  // ゆか と かべ
+  c.fillStyle='#E9C99B';c.fillRect(0,H*.78,W,H);c.strokeStyle='rgba(120,80,40,.15)';c.lineWidth=2;for(let x=-H;x<W;x+=46){c.beginPath();c.moveTo(x,H);c.lineTo(x+H*.22,H*.78);c.stroke();}
+  // ボード
+  const bw=hw*2.9,bh=hw*1.9;c.fillStyle='#fff';c.strokeStyle='#2563C9';c.lineWidth=5;c.beginPath();c.roundRect(hx-bw/2,hy-bh*.86,bw,bh,10);c.fill();c.stroke();
+  c.strokeStyle='#E8342E';c.lineWidth=4;c.strokeRect(hx-hw*.75,hy-hw*1.1,hw*1.5,hw*1.05);
+  c.fillStyle='#9AA3B8';c.fillRect(hx-4,hy+bh*.14,8,H);
+  // うしろの リング
+  c.strokeStyle='#C43A1C';c.lineWidth=rr*2;c.beginPath();c.ellipse(hx,hy,hw,hw*.22,0,Math.PI,0);c.stroke();
+  drawBall();
+  // ネット と まえの リング
+  c.strokeStyle='rgba(255,255,255,.95)';c.lineWidth=2;for(let i=0;i<=6;i++){const x=hx-hw+i*hw/3;c.beginPath();c.moveTo(x,hy);c.lineTo(hx-hw*.62+i*hw*.62/3,hy+hw*1.05);c.stroke();}
+  for(let j=1;j<=2;j++){const y=hy+j*hw*.35,s=1-j*.13;c.beginPath();c.ellipse(hx,y,hw*s,hw*.16,0,0,Math.PI);c.stroke();}
+  c.strokeStyle='#E8502E';c.lineWidth=rr*2;c.beginPath();c.ellipse(hx,hy,hw,hw*.22,0,0,Math.PI);c.stroke();
+  // ねらいの せん
+  if(drag&&state==='rest'){const dx=drag.b.x-drag.a.x,dy=drag.b.y-drag.a.y;if(dy<-10){c.setLineDash([8,10]);c.strokeStyle='rgba(31,42,68,.45)';c.lineWidth=5;c.beginPath();c.moveTo(ball.x,ball.y);c.lineTo(ball.x+dx*1.4,ball.y+dy*1.4);c.stroke();c.setLineDash([]);}}
+  parts.forEach(p=>{c.globalAlpha=Math.max(0,p.l);c.fillStyle=p.c;c.beginPath();c.arc(p.x,p.y,4,0,7);c.fill();});c.globalAlpha=1;
+  if(msg){c.globalAlpha=Math.max(0,msg.a);c.fillStyle='#1F2A44';c.font=`800 ${Math.round(R*1.5)}px 'M PLUS Rounded 1c',sans-serif`;c.textAlign='center';c.fillText(msg.t,W/2,H*.62);c.globalAlpha=1;}
+}
+function loop(t){requestAnimationFrame(loop);const k=last?Math.min(3,(t-last)/16.7):1;last=t;if(!W)return;
+  step(k);parts.forEach(p=>{p.x+=p.vx*k;p.y+=p.vy*k;p.vy+=.15*k;p.l-=.02*k;});parts=parts.filter(p=>p.l>0);if(msg){msg.a-=.012*k;if(msg.a<=0)msg=null;}
+  if(state==='done'&&t-t0>700){if(shots<=0&&run){run=false;finish();}else home();}
+  draw();}
+function finish(){const b=best();if(goals>b)try{localStorage.setItem('basket-best-'+lv,goals);}catch(_){}
+  Kids.yay(goals>=5);const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">10かいで ${goals}ゴール！</p><p class="sub">${goals>b?'じこベスト！':'さいこう '+b+'ゴール'}</p><div class="choices" id="ch"></div>`;menu();}
+function menu(){[['とまる ゴール','ゴールは うごかない'],['うごく ゴール','いれると うごきだす'],['はやい ゴール','どんどん はやく']].forEach(([a,b],i)=>{const x=document.createElement('button');x.className='choice';x.type='button';x.innerHTML=`${'★'.repeat(i+1)}<span>${a}</span><small>${b}</small>`;x.onclick=()=>{lv=i;goals=0;shots=10;hsp=i===2?W*.003:0;hx=W/2;$('g').textContent=0;$('left').textContent=10;$('ov').hidden=true;$('tip').hidden=false;home();run=true;Kids.blip(800);};$('ch').appendChild(x);});}
+menu();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

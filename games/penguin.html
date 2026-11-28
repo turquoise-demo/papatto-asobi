@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>そらとぶ ペンギン｜ぱぱっとあそび</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
-<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
 <style>.board{background:#1F2A6B;touch-action:none}#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}.hud{position:absolute;left:12px;right:12px;top:10px;display:flex;justify-content:space-between;z-index:2;pointer-events:none;font-size:20px}.hud span{background:rgba(255,255,255,.85);border-radius:14px;padding:2px 12px}</style>
 </head>
 <body>
 <div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">そらとぶ ペンギン</h1></div>
 <div class="board" id="board"><canvas id="cv"></canvas><div class="hud"><span id="hp"></span><span>てん <b id="sc">0</b></span></div>
 <div class="overlay" id="ov"><p class="msg">そらとぶ ペンギン</p><p class="sub">ゆびで うごかすと ゆきだまが じどうで でるよ<br>ほしを とると パワーアップ！</p><button class="big" id="go" type="button">はじめる</button></div></div></div>
-<script src="../shared/kids.js?v=20261125"></script>
+<script src="../shared/kids.js?v=20261128"></script>
 <script>
 document.getElementById('home').innerHTML=Kids.homeIcon;
 const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d');let W=0,H=0;

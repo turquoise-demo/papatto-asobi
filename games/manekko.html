@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>まねっこ ことり｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
+<style>
+.board{background:linear-gradient(#CDEBFF,#EAF8E0);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:12px;box-sizing:border-box}
+.msg2{margin:0;font-size:22px;min-height:1.4em;text-align:center}
+.birds{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;width:min(86vw,calc(100dvh - 260px),440px)}
+.bird{aspect-ratio:1;border:0;border-radius:32px;padding:8%;background:#fff;box-shadow:0 6px 0 rgba(0,0,0,.15);transition:transform .1s,filter .1s;filter:saturate(.55) brightness(.97)}
+.bird svg{width:100%;height:100%;display:block;transition:transform .12s}
+.bird.lit{filter:none;transform:scale(1.06);box-shadow:0 0 0 6px #FFC83D,0 6px 0 rgba(0,0,0,.15)}
+.bird.lit svg{transform:translateY(-6%) rotate(-6deg)}
+.bird:disabled{cursor:default}
+@media (orientation:landscape) and (max-height:540px){.birds{grid-template-columns:repeat(4,1fr);width:min(100%,calc((100dvh - 120px)*4.4),720px)}.msg2{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">まねっこ ことり</h1><div class="score">いま <b id="sc">0</b></div><div class="score">さいこう <b id="bs">0</b></div></div>
+  <div class="board" id="board">
+    <p class="msg2" id="m"></p>
+    <div class="birds" id="birds"></div>
+    <div class="overlay" id="ov"><p class="msg">まねっこ ことり</p><p class="sub">ことりが じゅんばんに なくよ<br>おなじ じゅんばんで タッチしてね</p><div class="choices" id="ch"></div></div>
+  </div>
+</div>
+<script src="../shared/kids.js?v=20261128"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i);
+const B=[['#E8342E','#FFB3AE',523.25],['#2563C9','#AFCBFF',659.25],['#F2B800','#FFE89A',783.99],['#2E9E4F','#B6E8C3',1046.5]];
+const bird=(c,l)=>`<svg viewBox="0 0 100 100"><ellipse cx="50" cy="90" rx="26" ry="5" fill="rgba(0,0,0,.1)"/><path d="M22 60 Q12 40 30 34 Q24 52 34 62Z" fill="${c}"/><ellipse cx="50" cy="56" rx="30" ry="28" fill="${c}"/><ellipse cx="54" cy="64" rx="18" ry="15" fill="${l}"/><circle cx="62" cy="44" r="5" fill="#1F2A44"/><circle cx="63.5" cy="42.5" r="1.6" fill="#fff"/><path d="M76 48 L90 52 L76 56Z" fill="#FFB020"/><path d="M34 52 Q44 40 52 54 Q42 60 34 52Z" fill="${l}" opacity=".9"/><line x1="44" y1="83" x2="42" y2="92" stroke="#FFB020" stroke-width="3" stroke-linecap="round"/><line x1="56" y1="83" x2="58" y2="92" stroke="#FFB020" stroke-width="3" stroke-linecap="round"/></svg>`;
+const els=B.map(([c,l],i)=>{const b=document.createElement('button');b.type='button';b.className='bird';b.innerHTML=bird(c,l);b.setAttribute('aria-label',['あか','あお','きいろ','みどり'][i]+'の ことり');b.addEventListener('pointerdown',e=>{e.preventDefault();tap(i);});$('birds').appendChild(b);return b;});
+let seq=[],pos=0,turn='wait',speed=600,best=+(localStorage.getItem('manekko-best')||0);$('bs').textContent=best;
+function sing(i,d=.35){B[i][2]&&Kids.tone(B[i][2],d,'triangle',.1);Kids.tone(B[i][2]*2,d*.5,'sine',.03);els[i].classList.add('lit');setTimeout(()=>els[i].classList.remove('lit'),Math.min(380,speed*.7));}
+function play(){turn='show';$('m').textContent='よく きいてね…';let k=0;const step=()=>{if(k>=seq.length){turn='you';pos=0;$('m').textContent='どうぞ！';return;}sing(seq[k]);k++;setTimeout(step,speed);};setTimeout(step,700);}
+function grow(){seq.push(Math.floor(Math.random()*4));$('sc').textContent=seq.length-1;speed=Math.max(300,620-seq.length*22);play();}
+function tap(i){if(turn!=='you')return;sing(i,.25);
+  if(i!==seq[pos]){turn='wait';Kids.oops();els[seq[pos]].classList.add('lit');setTimeout(()=>els[seq[pos]].classList.remove('lit'),700);const got=seq.length-1;
+    if(got>best){best=got;try{localStorage.setItem('manekko-best',best);}catch(_){}$('bs').textContent=best;}
+    setTimeout(()=>{const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">${got}かい まねできた！</p><p class="sub">${got>=best&&got>0?'じこベスト！':'さいこう '+best+'かい'}</p><div class="choices" id="ch"></div>`;menu();},900);return;}
+  pos++;if(pos>=seq.length){turn='wait';$('m').textContent=seq.length%5===0?'すごい！':'じょうず！';if(seq.length%5===0)Kids.yay(false);setTimeout(grow,800);}}
+function menu(){[['はじめる','1つから']].forEach(([a,b])=>{const x=document.createElement('button');x.className='big';x.type='button';x.textContent=a;x.onclick=()=>{$('ov').hidden=true;seq=[];Kids.blip(800);grow();};$('ch').appendChild(x);});}
+menu();
+</script>
+</body>
+</html>

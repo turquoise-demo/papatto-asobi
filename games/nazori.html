@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ひらがな なぞり｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
+<style>
+.board{background:#F3EEFF;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px;box-sizing:border-box}
+.paper{position:relative;width:min(84vw,calc(100dvh - 300px),420px);aspect-ratio:1;background:#fff;border-radius:24px;box-shadow:0 6px 0 rgba(0,0,0,.1);touch-action:none;overflow:hidden}
+.paper::before,.paper::after{content:"";position:absolute;background:repeating-linear-gradient(90deg,#E4DDF5 0 8px,transparent 8px 16px);pointer-events:none}
+.paper::before{left:0;right:0;top:50%;height:2px}
+.paper::after{top:0;bottom:0;left:50%;width:2px;background:repeating-linear-gradient(#E4DDF5 0 8px,transparent 8px 16px)}
+.paper canvas{position:absolute;inset:0;width:100%;height:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.row button{border:0;border-radius:16px;padding:10px 16px;font-size:18px;background:#fff;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+.row button:active{transform:translateY(3px)}
+.row .go{background:#8E44AD;color:#fff}
+.dots{display:flex;gap:6px}.dots i{width:14px;height:14px;border-radius:50%;background:#D9CFF0;display:block}.dots i.ok{background:#FFB020}.dots i.now{box-shadow:0 0 0 3px #8E44AD}
+.mark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:min(50vw,200px);color:#E8342E;opacity:0;font-weight:800}
+.mark.on{animation:hana 1.2s forwards}
+@keyframes hana{0%{opacity:0;transform:scale(.4) rotate(-30deg)}30%{opacity:.85;transform:scale(1.05)}80%{opacity:.85}100%{opacity:0}}
+@media (orientation:landscape) and (max-height:540px){
+  .board{display:grid;grid-template-columns:auto minmax(0,auto);grid-template-rows:auto auto;align-content:center;justify-content:center;column-gap:24px;row-gap:14px}
+  .paper{grid-row:1/3;width:min(48vw,calc(100dvh - 40px),420px)}
+  .dots{grid-column:2;grid-row:1;align-self:end;flex-wrap:wrap;max-width:220px}.row{grid-column:2;grid-row:2;align-self:start;flex-direction:column;align-items:stretch}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">ひらがな なぞり</h1><div class="score"><b id="sc">0</b>もじ</div></div>
+  <div class="board" id="board">
+    <div class="paper" id="paper"><canvas id="bg"></canvas><canvas id="ink"></canvas><div class="mark" id="mk">◎</div></div>
+    <div class="dots" id="dots"></div>
+    <div class="row"><button type="button" id="clr">けす</button><button type="button" id="say">よむ</button><button type="button" class="go" id="nx">つぎ</button></div>
+    <div class="overlay" id="ov"><p class="msg">ひらがな なぞり</p><p class="sub">うすい もじの うえを ゆびで なぞろう<br>じょうずに かけたら はなまる！</p><div class="choices" id="ch"></div></div>
+  </div>
+</div>
+<script src="../shared/kids.js?v=20261128"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i),paper=$('paper'),bg=$('bg'),ink=$('ink'),cb=bg.getContext('2d'),ci=ink.getContext('2d');
+const ROWS=[['あ','あいうえお'],['か','かきくけこ'],['さ','さしすせそ'],['た','たちつてと'],['な','なにぬねの'],['は','はひふへほ'],['ま','まみむめも'],['や','やゆよ'],['ら','らりるれろ'],['わ','わをん']];
+const FONT="'M PLUS Rounded 1c','Hiragino Maru Gothic ProN',sans-serif";
+let row=0,idx=0,chars='',S=300,mask=null,strokes=[],cur=null,done=false,sc=0,okSet=new Set();
+const D=()=>Math.min(devicePixelRatio||1,2);
+function fit(){const r=paper.getBoundingClientRect();if(!r.width)return;S=r.width;[bg,ink].forEach(c=>{c.width=c.height=Math.round(S*D());});cb.setTransform(D(),0,0,D(),0,0);ci.setTransform(D(),0,0,D(),0,0);if(chars)drawChar();}
+new ResizeObserver(fit).observe(paper);
+function glyph(ctx,ch,color){ctx.font=`800 ${S*.74}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=color;ctx.fillText(ch,S/2,S*.53);}
+function drawChar(){cb.clearRect(0,0,S,S);glyph(cb,chars[idx],'#DCD3F2');
+  // 判定用のマスク（小さめの解像度）
+  const m=document.createElement('canvas');m.width=m.height=100;const mc=m.getContext('2d');mc.scale(100/S,100/S);glyph(mc,chars[idx],'#000');mask=mc.getImageData(0,0,100,100).data;redraw();}
+function redraw(){ci.clearRect(0,0,S,S);ci.lineCap=ci.lineJoin='round';ci.strokeStyle='#8E44AD';ci.lineWidth=S*.075;strokes.forEach(s=>{ci.beginPath();s.forEach((p,i)=>ci[i?'lineTo':'moveTo'](p[0]*S,p[1]*S));if(s.length===1)ci.lineTo(s[0][0]*S+.1,s[0][1]*S);ci.stroke();});}
+function pos(e){const r=paper.getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height];}
+paper.addEventListener('pointerdown',e=>{if(done||!$('ov').hidden)return;try{paper.setPointerCapture(e.pointerId);}catch(_){}cur=[pos(e)];strokes.push(cur);redraw();});
+paper.addEventListener('pointermove',e=>{if(!cur)return;cur.push(pos(e));redraw();});
+const endStroke=()=>{if(!cur)return;cur=null;check();};paper.addEventListener('pointerup',endStroke);paper.addEventListener('pointercancel',endStroke);
+function check(){
+  // もじの ぶぶんが どれだけ ぬれたか ／ はみだしが どれだけ あるか
+  const u=document.createElement('canvas');u.width=u.height=100;const uc=u.getContext('2d');uc.lineCap=uc.lineJoin='round';uc.lineWidth=11;uc.strokeStyle='#000';
+  strokes.forEach(s=>{uc.beginPath();s.forEach((p,i)=>uc[i?'lineTo':'moveTo'](p[0]*100,p[1]*100));if(s.length===1)uc.lineTo(s[0][0]*100+.1,s[0][1]*100);uc.stroke();});
+  const ud=uc.getImageData(0,0,100,100).data;let g=0,hit=0,ink2=0,out=0;
+  for(let y=0;y<100;y++)for(let x=0;x<100;x++){const i=(y*100+x)*4+3;const isG=mask[i]>100,isU=ud[i]>100;if(isG){g++;if(isU)hit++;}if(isU){ink2++;if(!near(x,y))out++;}}
+  const cover=hit/Math.max(1,g),spill=out/Math.max(1,ink2);
+  if(cover>.72&&spill<.35)good();
+}
+function near(x,y){for(let a=-5;a<=5;a+=2.5)for(let b=-5;b<=5;b+=2.5){const X=Math.round(x+a),Y=Math.round(y+b);if(X>=0&&Y>=0&&X<100&&Y<100&&mask[(Y*100+X)*4+3]>100)return true;}return false;}
+function good(){done=true;const k=row+':'+idx;if(!okSet.has(k)){okSet.add(k);sc++;$('sc').textContent=sc;}const m=$('mk');m.classList.remove('on');void m.offsetWidth;m.classList.add('on');Kids.yay(false);Kids.say('はなまる！ '+chars[idx]);dots();setTimeout(next,1500);}
+function next(){if(idx<chars.length-1){idx++;show();}else{Kids.yay();const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">「${ROWS[row][0]}」の ぎょう できた！</p><p class="sub">つぎの ぎょうを えらんでね</p><div class="choices" id="ch"></div>`;menu();}}
+function show(){done=false;strokes=[];drawChar();dots();Kids.say(chars[idx]);}
+function dots(){$('dots').innerHTML=[...chars].map((c,i)=>`<i class="${okSet.has(row+':'+i)?'ok':''} ${i===idx?'now':''}"></i>`).join('');}
+$('clr').onclick=()=>{strokes=[];done=false;redraw();Kids.blip(400);};
+$('say').onclick=()=>Kids.say(chars[idx]);
+$('nx').onclick=()=>{Kids.blip();if(idx<chars.length-1){idx++;show();}else next();};
+function menu(){ROWS.forEach(([h,s],i)=>{const x=document.createElement('button');x.className='choice';x.type='button';x.innerHTML=`<span style="font-size:28px">${h}</span><small>${s}</small>`;x.style.minWidth='74px';x.onclick=()=>{row=i;chars=s;idx=0;$('ov').hidden=true;fit();show();};$('ch').appendChild(x);});}
+menu();
+</script>
+</body>
+</html>

@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>とけい よめるかな｜ぱぱっとあそび</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
-<link rel="stylesheet" href="../shared/kids.css?v=20261125">
-<style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#E3F2FD;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:12px;box-sizing:border-box}#ck{width:min(70vw,44vh,340px);height:auto}.q{font-size:22px;margin:0}.an{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(92%,460px)}.an button{border:0;border-radius:18px;padding:14px 4px;font-size:clamp(20px,5vw,28px);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.2)}.stars{font-size:22px;color:#FFB020;min-height:1.2em;letter-spacing:2px}#ck .h,#ck .m{transition:transform .5s cubic-bezier(.3,1.4,.5,1)}</style>
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
+<style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#E3F2FD;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:12px;box-sizing:border-box}#ck{width:min(70vw,44vh,340px);height:auto}.q{font-size:22px;margin:0}.an{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(92%,460px)}.an button{border:0;border-radius:18px;padding:14px 4px;font-size:clamp(20px,5vw,28px);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.2)}.stars{font-size:22px;color:#FFB020;min-height:1.2em;letter-spacing:2px}#ck .h,#ck .m{transition:transform .5s cubic-bezier(.3,1.4,.5,1)}@media (orientation:landscape) and (max-height:540px){.board{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto auto;align-content:center;justify-items:center;column-gap:24px;row-gap:10px}#ck{grid-column:1;grid-row:1/4;width:min(40vw,calc(100dvh - 60px),300px)}.stars{grid-column:2;grid-row:1}.q{grid-column:2;grid-row:2}.an{grid-column:2;grid-row:3;width:min(100%,420px)}.an button{padding:10px 4px}}
+</style>
 </head><body>
 <div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">とけい よめるかな</h1><div class="score"><b id="sc">0</b>もん</div></div>
 <div class="board" id="board"><div class="stars" id="st"></div><svg id="ck" viewBox="0 0 200 200"></svg><p class="q">なんじ かな？</p><div class="an" id="an"></div>
 <div class="overlay" id="ov"><p class="msg">とけい よめるかな</p><p class="sub">はりを みて、なんじか えらんでね</p><div class="choices" id="ch"></div></div></div></div>
-<script src="../shared/kids.js?v=20261125"></script>
+<script src="../shared/kids.js?v=20261128"></script>
 <script>document.getElementById("home").innerHTML=Kids.homeIcon;const $=i=>document.getElementById(i);
 let lv=0,ans=null,sc=0,streak=0,busy=false;
 const COL=['#E8342E','#2563C9','#2E9E4F','#9B59B6'];

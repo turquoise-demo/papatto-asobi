@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>けいさん バトル｜ぱぱっとあそび</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
-<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
 <style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#2C2450;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:10px;padding:10px;box-sizing:border-box;color:#fff}#mon{position:relative;min-height:0;display:flex;align-items:center;justify-content:center}#mon svg{height:100%;max-width:100%;max-height:340px}.bar{height:14px;background:rgba(255,255,255,.2);border-radius:10px;overflow:hidden}.bar i{display:block;height:100%;transition:width .25s}.top{position:absolute;left:0;right:0;top:0;display:grid;gap:5px;text-align:center}.q{text-align:center;font-size:clamp(34px,9vw,64px);font-variant-numeric:tabular-nums;line-height:1.1}.an{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.an button{border:0;border-radius:18px;padding:14px 0;font-size:clamp(26px,7vw,44px);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.3);font-variant-numeric:tabular-nums}.hit{animation:hit .3s}@keyframes hit{30%{transform:translateX(14px) rotate(4deg);filter:brightness(1.9)}60%{transform:translateX(-10px)}}.atk{animation:atk .35s}@keyframes atk{50%{transform:scale(1.25)}}</style>
 </head>
 <body>
 <div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">けいさん バトル</h1><div class="score">♥<span id="hp">5</span></div><div class="score">てん<span id="sc">0</span></div></div>
 <div class="board" id="board"><div id="mon"></div><div class="q" id="q"></div><div class="an" id="an"></div><div class="overlay" id="ov"><p class="msg">けいさん バトル</p><p class="sub">こたえを えらんで モンスターを たおそう<br>あかい ゲージが いっぱいに なる まえに！</p><div class="choices" id="ch"></div></div></div></div>
-<script src="../shared/kids.js?v=20261125"></script>
+<script src="../shared/kids.js?v=20261128"></script>
 <script>
 document.getElementById('home').innerHTML=Kids.homeIcon;
 const $=i=>document.getElementById(i),R=n=>Math.floor(Math.random()*n);

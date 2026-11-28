@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>かげ あて｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
+<style>
+.board{background:linear-gradient(#FFF4D6,#FFE2B8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:12px;box-sizing:border-box}
+.e{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;line-height:1}
+.stage{position:relative;width:min(56vw,40vh,260px);aspect-ratio:1;border-radius:28px;background:#fff;box-shadow:0 6px 0 rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center}
+.stage::after{content:"";position:absolute;left:18%;right:18%;bottom:8%;height:7%;border-radius:50%;background:rgba(0,0,0,.08)}
+#sh{font-size:min(36vw,26vh,170px);filter:brightness(0);transition:filter .5s}
+#sh.open{filter:none;animation:popin .45s}
+.q{margin:0;font-size:20px}
+.ops{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.ops button{width:clamp(76px,20vw,110px);aspect-ratio:1;border:4px solid transparent;border-radius:24px;background:#fff;box-shadow:0 5px 0 rgba(0,0,0,.15);font-size:clamp(44px,12vw,66px);padding:0;display:flex;align-items:center;justify-content:center}
+.ops button:active{transform:translateY(3px)}
+.ops button.ng{opacity:.3}
+.ops button.ok{border-color:#2E9E4F;background:#E5F7E9}
+.stars{font-size:20px;color:#FFB020;min-height:1.2em;letter-spacing:2px}
+@media (orientation:landscape) and (max-height:540px){
+  .board{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto auto;align-content:center;justify-items:center;column-gap:28px;row-gap:10px}
+  .stage{grid-row:1/4;width:min(40vw,calc(100dvh - 60px),280px)}#sh{font-size:min(26vw,calc(100dvh - 140px),180px)}
+  .stars{grid-column:2;grid-row:1}.q{grid-column:2;grid-row:2}.ops{grid-column:2;grid-row:3}
+  .ops button{width:clamp(64px,19dvh,96px);font-size:clamp(38px,12dvh,58px)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">かげ あて</h1><div class="score"><b id="sc">0</b>/10</div></div>
+  <div class="board" id="board">
+    <div class="stage"><span class="e" id="sh"></span></div>
+    <div class="stars" id="st"></div>
+    <p class="q" id="q">この かげ だあれ？</p>
+    <div class="ops" id="ops"></div>
+    <div class="overlay" id="ov"><p class="msg">かげ あて</p><p class="sub">まっくろな かげを みて<br>おなじ ものを えらんでね</p><div class="choices" id="ch"></div></div>
+  </div>
+</div>
+<script src="../shared/kids.js?v=20261128"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i);
+// [えもじ, よみ, なかま]
+const ALL=[
+ ['🐶','いぬ',0],['🐱','ねこ',0],['🐰','うさぎ',0],['🐘','ぞう',0],['🦒','きりん',0],['🐢','かめ',0],['🐧','ペンギン',0],['🦀','かに',0],['🐙','たこ',0],['🦋','ちょうちょ',0],['🐌','かたつむり',0],['🦕','きょうりゅう',0],['🐳','くじら',0],['🦉','ふくろう',0],['🐓','にわとり',0],['🐿️','りす',0],['🦩','フラミンゴ',0],['🐊','わに',0],
+ ['🚗','くるま',1],['✈️','ひこうき',1],['🚀','ロケット',1],['🚲','じてんしゃ',1],['⛵','ヨット',1],['🚁','ヘリコプター',1],['🚂','きしゃ',1],['🛴','キックボード',1],
+ ['☂️','かさ',2],['🎸','ギター',2],['✂️','はさみ',2],['🔑','かぎ',2],['🎺','トランペット',2],['🪁','たこあげ',2],['⏰','めざましどけい',2],['👓','めがね',2],['🧸','くま の ぬいぐるみ',2],
+ ['🍎','りんご',3],['🍌','バナナ',3],['🍇','ぶどう',3],['🍄','きのこ',3],['🍐','なし',3],['🥕','にんじん',3],['🍓','いちご',3],['🍍','パイナップル',3],['🌽','とうもろこし',3],
+ ['🌵','サボテン',4],['⭐','ほし',4],['🌙','つき',4],['🏠','いえ',4],['❤️','ハート',4],['🌷','チューリップ',4],['⛄','ゆきだるま',4],['🏰','おしろ',4]
+];
+let lv=0,n=0,sc=0,ans=null,busy=false,used=[];
+function pickQ(){let c;do{c=ALL[Math.floor(Math.random()*ALL.length)];}while(used.includes(c[0]));used.push(c[0]);return c;}
+function q(){
+  busy=false;ans=pickQ();const sh=$('sh');sh.classList.remove('open');sh.textContent=ans[0];
+  const k=lv===0?3:4;let pool=lv===2?ALL.filter(a=>a[2]===ans[2]&&a!==ans):ALL.filter(a=>a!==ans&&(lv===1||a[2]!==ans[2]));
+  const ops=Kids.shuffle([ans,...Kids.shuffle(pool).slice(0,k-1)]);
+  $('ops').innerHTML='';ops.forEach(o=>{const b=document.createElement('button');b.type='button';b.className='e';b.textContent=o[0];b.setAttribute('aria-label',o[1]);b.onclick=()=>pick(b,o);$('ops').appendChild(b);});
+  $('q').textContent='この かげ だあれ？';
+}
+function pick(b,o){
+  if(busy)return;
+  if(o===ans){busy=true;sc++;n++;$('sc').textContent=sc;b.classList.add('ok');$('sh').classList.add('open');$('q').textContent=ans[1]+'！';Kids.yay(false);Kids.say(ans[1]);$('st').textContent='★'.repeat(sc);setTimeout(n>=10?end:q,1500);}
+  else{b.classList.add('ng');Kids.oops();Kids.shake(b);}
+}
+function end(){Kids.yay();Kids.say('ぜんぶ あたり！');const o=$('ov');o.hidden=false;o.innerHTML='<p class="msg">ぜんぶ みつけたね！</p><p class="sub">10もん クリア</p><div class="choices" id="ch"></div>';menu();}
+function menu(){[['やさしい','3つから'],['ふつう','4つから'],['むずかしい','にた なかまから']].forEach(([a,b],i)=>{const x=document.createElement('button');x.className='choice';x.type='button';x.innerHTML=`${'★'.repeat(i+1)}<span>${a}</span><small>${b}</small>`;x.onclick=()=>{lv=i;n=0;sc=0;used=[];$('sc').textContent=0;$('st').textContent='';$('ov').hidden=true;Kids.blip(800);q();};$('ch').appendChild(x);});}
+menu();$('sh').textContent='🐘';
+</script>
+</body>
+</html>

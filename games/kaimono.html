@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>おかいもの ごっこ｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
+<style>
+.board{background:#EAF6FF;display:grid;grid-template-rows:auto minmax(110px,260px) auto;align-content:center;gap:14px;padding:12px;box-sizing:border-box}
+.e{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;line-height:1}
+.shop{display:flex;align-items:center;justify-content:center;gap:16px;background:#fff;border-radius:20px;padding:10px 16px;box-shadow:0 4px 0 rgba(0,0,0,.08)}
+.shop .e{font-size:64px}
+.tag{background:#FFD23F;border-radius:14px;padding:6px 16px;font-size:30px;box-shadow:0 4px 0 #E0A800;font-variant-numeric:tabular-nums;position:relative}
+.tag::before{content:"";position:absolute;left:-8px;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px #E0A800}
+.tray{background:#8D5A3B;border-radius:22px;box-shadow:inset 0 6px 0 rgba(0,0,0,.18);display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:6px;padding:12px;position:relative;min-height:70px;overflow:auto}
+.tray .sum{position:absolute;right:12px;top:8px;color:#FFE9C9;font-size:16px;font-variant-numeric:tabular-nums}
+.tray .hint{color:#E8CBA8;font-size:15px;font-weight:500}
+.coins{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center}
+.coin{--s:64px;width:var(--s);height:var(--s);border-radius:50%;border:0;padding:0;font-size:calc(var(--s)*.3);display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 4px 0 rgba(0,0,0,.25),inset 0 0 0 4px rgba(255,255,255,.35);font-variant-numeric:tabular-nums;flex:none}
+.coin:active{transform:translateY(3px)}
+.coin.hole::after{content:"";position:absolute;width:22%;height:22%;border-radius:50%;background:var(--bg,#EAF6FF);top:39%;left:39%}
+.coin.hole span{transform:translateY(-62%);font-size:.8em}
+.c1{background:#E6E9EE;--s:54px}.c5{background:#E9B949;--s:60px}.c10{background:#C9733E;color:#fff;--s:66px}.c50{background:#D3D7DE;--s:62px}.c100{background:#C3C8D0;--s:68px}.c500{background:#E3C26A;--s:74px}
+.tray .coin{--s:44px;font-size:13px;--bg:#8D5A3B}
+.tray .c500{--s:52px}.tray .c100{--s:48px}.tray .c1{--s:38px}
+.pay{border:0;border-radius:18px;background:#2E9E4F;color:#fff;font-size:20px;padding:12px 22px;box-shadow:0 5px 0 #1E6E36}
+.pay:active{transform:translateY(3px)}
+.stars{color:#FFB020;font-size:18px;letter-spacing:2px;min-width:3em}
+@media (orientation:landscape) and (max-height:540px){
+  .board{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);grid-template-rows:auto minmax(0,1fr)}
+  .shop{grid-column:1;grid-row:1/3;flex-direction:column}
+  .shop .e{font-size:min(80px,20dvh)}
+  .tray{grid-column:2;grid-row:1}
+  .coins{grid-column:2;grid-row:2;align-content:center}
+  .coin{--s:52px}.c1{--s:44px}.c5{--s:48px}.c10{--s:52px}.c50{--s:50px}.c100{--s:54px}.c500{--s:58px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">おかいもの ごっこ</h1><div class="score"><b id="sc">0</b>こ</div></div>
+  <div class="board" id="board">
+    <div class="shop"><span class="e" id="item">🍎</span><div class="tag"><b id="price">0</b>えん</div><div class="stars" id="st"></div></div>
+    <div class="tray" id="tray"><span class="sum" id="sum">0えん</span><span class="hint" id="hint">おかねを タッチして ここに だそう</span></div>
+    <div class="coins" id="coins"></div>
+    <div class="overlay" id="ov"><p class="msg">おかいもの ごっこ</p><p class="sub">ねだんと ぴったり おなじに なるように<br>おかねを だして「はらう」を おしてね</p><div class="choices" id="ch"></div></div>
+  </div>
+</div>
+<script src="../shared/kids.js?v=20261128"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i);
+const ITEMS=[['🍎','りんご'],['🍌','バナナ'],['🍙','おにぎり'],['🍞','パン'],['🥛','ぎゅうにゅう'],['🍦','ソフトクリーム'],['🍩','ドーナツ'],['🥚','たまご'],['🍭','キャンディ'],['🧃','ジュース'],['✏️','えんぴつ'],['📓','ノート'],['🎈','ふうせん'],['🧸','くまさん'],['🍓','いちご'],['🥕','にんじん'],['🍪','クッキー'],['🍉','すいか']];
+const LV=[{coins:[1,5,10],max:30,step:1},{coins:[1,5,10,50],max:100,step:1},{coins:[1,5,10,50,100,500],max:800,step:10}];
+let lv=0,price=0,paid=[],sc=0,streak=0,busy=false;
+function coinEl(v){const b=document.createElement('button');b.type='button';b.className='coin c'+v+(v===5||v===50?' hole':'');b.innerHTML=`<span>${v}</span>`;b.setAttribute('aria-label',v+'えん');return b;}
+function q(){busy=false;paid=[];const L=LV[lv];const it=ITEMS[Math.floor(Math.random()*ITEMS.length)];
+  price=L.step*(1+Math.floor(Math.random()*(L.max/L.step)));if(lv===2&&Math.random()<.4)price+=Math.floor(Math.random()*10);
+  $('item').textContent=it[0];$('price').textContent=price;Kids.say(it[1]+'は '+price+'えん');tray();
+  $('coins').innerHTML='';L.coins.forEach(v=>{const b=coinEl(v);b.onclick=()=>{if(busy)return;paid.push(v);Kids.tone(1200+v,.06,'triangle',.06);tray();};$('coins').appendChild(b);});
+  const p=document.createElement('button');p.type='button';p.className='pay';p.textContent='はらう';p.onclick=pay;$('coins').appendChild(p);}
+function tray(){const t=$('tray');[...t.querySelectorAll('.coin')].forEach(c=>c.remove());$('hint').hidden=paid.length>0;
+  paid.slice().sort((a,b)=>b-a).forEach(v=>{const c=coinEl(v);c.onclick=()=>{if(busy)return;paid.splice(paid.indexOf(v),1);Kids.blip(400);tray();};t.appendChild(c);});
+  $('sum').textContent=sum()+'えん';}
+const sum=()=>paid.reduce((a,b)=>a+b,0);
+function pay(){if(busy)return;const s=sum();
+  if(s===price){busy=true;sc++;streak++;$('sc').textContent=sc;$('st').textContent='★'.repeat(Math.min(5,streak));Kids.yay(streak%5===0);Kids.say('ぴったり！ ありがとう');setTimeout(q,1700);}
+  else if(s<price){streak=0;Kids.oops();Kids.say('あと '+(price-s)+'えん たりないよ');Kids.shake($('tray'));}
+  else{streak=0;Kids.oops();Kids.say((s-price)+'えん おおいよ');Kids.shake($('tray'));}}
+[['30えん まで','1・5・10えん'],['100えん まで','50えんも'],['ぜんぶ','100・500えんも']].forEach(([a,b],i)=>{const x=document.createElement('button');x.className='choice';x.type='button';x.innerHTML=`${'★'.repeat(i+1)}<span>${a}</span><small>${b}</small>`;x.onclick=()=>{lv=i;sc=0;streak=0;$('sc').textContent=0;$('st').textContent='';$('ov').hidden=true;Kids.blip(800);q();};$('ch').appendChild(x);});
+</script>
+</body>
+</html>

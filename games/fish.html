@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>うみの つりびと｜ぱぱっとあそび</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
-<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
 <style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#8FD8FF;touch-action:none}#cv{position:absolute;inset:0;width:100%;height:100%}.act{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;z-index:3}.act button{width:150px;height:74px;border-radius:40px;font-size:22px;touch-action:none}.book{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;width:100%;max-width:640px}.book div{background:#fff;color:#1F2A44;border-radius:14px;padding:6px;font-size:13px}.book canvas{width:100%;height:auto;display:block}.overlay.bk{overflow:auto;justify-content:flex-start;background:#0F5C8C}</style>
 </head>
 <body>
 <div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">うみの つりびと</h1><button class="hbtn" id="bk" type="button">ずかん</button><div class="score"><span id="n">0</span>/16</div></div>
 <div class="board" id="board"><canvas id="cv"></canvas><div class="act"><button class="big" id="act" type="button">なげる</button></div></div></div>
-<script src="../shared/kids.js?v=20261125"></script>
+<script src="../shared/kids.js?v=20261128"></script>
 <script>
 document.getElementById('home').innerHTML=Kids.homeIcon;
 const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d');

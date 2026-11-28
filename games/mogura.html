@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>ひょっこり タッチ｜ぱぱっとあそび</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
-<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
 <style>
 .board{background:#B8E28E;display:flex;align-items:center;justify-content:center;touch-action:pan-y}
 .field{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,3vw,28px);width:min(92%,640px);padding:20px 0 40px}
@@ -22,6 +22,7 @@
 @keyframes up{to{transform:translateY(-40px);opacity:0}}
 .over{background:rgba(184,226,142,.92);z-index:5}
 .stars{display:flex;gap:8px}
+@media (orientation:landscape) and (max-height:540px){.field{width:min(92%,640px,calc(100dvh - 40px));padding:28px 0 6px;gap:clamp(8px,2vw,20px)}}
 </style>
 </head>
 <body>
@@ -37,7 +38,7 @@
     <div class="center over" id="start"><p class="msg">でてきたら タッチしてね</p><button class="big" id="go">はじめる</button></div>
   </div>
 </div>
-<script src="../shared/kids.js?v=20261125"></script>
+<script src="../shared/kids.js?v=20261128"></script>
 <script>
 document.getElementById('home').innerHTML=Kids.homeIcon;
 // でてくる なかま

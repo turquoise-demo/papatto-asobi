@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>おかし くずし｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
+<style>
+.board{background:#2B1E4A;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">おかし くずし</h1><div class="score">♥<b id="hp">3</b></div><div class="score">ステージ <b id="st">1</b></div></div>
+  <div class="board" id="board"><canvas id="cv"></canvas>
+    <div class="overlay" id="ov"><p class="msg">おかし くずし</p><p class="sub">ゆびで おさらを うごかして ボールを はねかえそう<br>おかしを ぜんぶ くずしたら クリア！</p><div class="choices" id="ch"></div></div>
+  </div>
+</div>
+<script src="../shared/kids.js?v=20261128"></script>
+<script>
+document.getElementById('home').innerHTML=Kids.homeIcon;
+const $=i=>document.getElementById(i),cv=$('cv'),c=cv.getContext('2d'),board=$('board');
+// おかしの いろ：[ほんたい, うえの かざり]
+const K=[['#F58CA8','#FFE3EC'],['#7B4A34','#C99A7A'],['#FFD23F','#FFF4B8'],['#8DB562','#E1F0C8'],['#4FC3F7','#D6F2FF'],['#B39DDB','#EDE5FF']];
+// ステージの かたち（# = おかし、2 = かたい おかし）
+const MAPS=[
+ ['##########','##########','..######..'],
+ ['#.#.##.#.#','##########','#2##22##2#','.########.'],
+ ['....##....','...####...','..##22##..','.########.','##########'],
+ ['#2#2#2#2#2','##########','2........2','##########','#2#2#2#2#2'],
+ ['22######22','#22####22#','##22##22##','###2222###','##########'],
+];
+let W=0,H=0,pad={x:0,w:90},balls=[],bricks=[],items=[],parts=[],hp=3,stage=0,speed=1,run=false,wait=true,last=0,startSp=1;
+function fit(){const r=board.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);pad.w=Math.max(70,W*.18);if(!pad.x)pad.x=W/2;layout();}
+new ResizeObserver(fit).observe(board);
+const BR=()=>Math.max(6,Math.min(W,H)*.022),PY=()=>H-Math.max(26,H*.07);
+function layout(){const m=MAPS[stage%MAPS.length],cols=10,gap=4,bw=(W-24-gap*(cols-1))/cols,bh=Math.min(28,H*.055),top=Math.max(14,H*.05);
+  bricks.forEach(b=>{b.x=12+b.c*(bw+gap);b.y=top+b.r*(bh+gap);b.w=bw;b.h=bh;});}
+function build(){bricks=[];const m=MAPS[stage%MAPS.length];m.forEach((row,r)=>[...row].forEach((ch,col)=>{if(ch!=='.')bricks.push({r,c:col,hp:ch==='2'?2:1,k:(r+col)%K.length});}));layout();}
+function newBall(){balls=[{x:pad.x,y:PY()-BR()-2,vx:0,vy:0,stuck:true}];wait=true;}
+function launch(){balls.forEach(b=>{if(b.stuck){b.stuck=false;const a=-Math.PI/2+(Math.random()-.5)*.8,s=sp();b.vx=Math.cos(a)*s;b.vy=Math.sin(a)*s;}});wait=false;}
+const sp=()=>Math.min(W,H)*.0105*speed*(1+stage*.06);
+function move(e){const r=cv.getBoundingClientRect();pad.x=Math.min(Math.max(e.clientX-r.left,pad.w/2),W-pad.w/2);}
+cv.addEventListener('pointerdown',e=>{if(!run)return;try{cv.setPointerCapture(e.pointerId);}catch(_){}move(e);});
+cv.addEventListener('pointermove',e=>{if(run&&(e.buttons||e.pointerType!=='mouse'))move(e);});
+cv.addEventListener('pointerup',()=>{if(run&&wait)launch();});
+addEventListener('keydown',e=>{if(!run)return;if(e.key==='ArrowLeft')pad.x=Math.max(pad.w/2,pad.x-30);if(e.key==='ArrowRight')pad.x=Math.min(W-pad.w/2,pad.x+30);if(e.key===' '&&wait)launch();});
+function hitBrick(b,br){br.hp--;Kids.tone(600+br.r*80,.06,'triangle',.06);for(let i=0;i<8;i++)parts.push({x:b.x,y:b.y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,l:1,col:K[br.k][0]});
+  if(br.hp<=0){bricks.splice(bricks.indexOf(br),1);if(Math.random()<.14)items.push({x:br.x+br.w/2,y:br.y+br.h,t:Math.random()<.5?'wide':'multi'});}}
+function step(k){
+  if(!run)return;
+  balls.forEach(b=>{
+    if(b.stuck){b.x=pad.x;b.y=PY()-BR()-2;return;}
+    const n=Math.ceil(Math.hypot(b.vx,b.vy)*k/(BR()*.6));
+    for(let s=0;s<n;s++){
+      b.x+=b.vx*k/n;b.y+=b.vy*k/n;const r=BR();
+      if(b.x<r){b.x=r;b.vx=Math.abs(b.vx);}if(b.x>W-r){b.x=W-r;b.vx=-Math.abs(b.vx);}if(b.y<r){b.y=r;b.vy=Math.abs(b.vy);}
+      // おさら
+      const py=PY();if(b.vy>0&&b.y+r>=py&&b.y+r<=py+16&&Math.abs(b.x-pad.x)<pad.w/2+r){const off=(b.x-pad.x)/(pad.w/2),a=-Math.PI/2+off*1.05,s2=Math.hypot(b.vx,b.vy);b.vx=Math.cos(a)*s2;b.vy=Math.sin(a)*s2;b.y=py-r;Kids.tone(320,.05,'sine',.06);}
+      // おかし
+      for(const br of bricks){if(b.x+r>br.x&&b.x-r<br.x+br.w&&b.y+r>br.y&&b.y-r<br.y+br.h){
+        const ox=Math.min(b.x+r-br.x,br.x+br.w-(b.x-r)),oy=Math.min(b.y+r-br.y,br.y+br.h-(b.y-r));
+        if(ox<oy){b.vx*=-1;b.x+=b.vx>0?ox:-ox;}else{b.vy*=-1;b.y+=b.vy>0?oy:-oy;}hitBrick(b,br);break;}}
+    }
+    // まっすぐ よこに なりすぎない
+    if(Math.abs(b.vy)<sp()*.25){b.vy=(b.vy<0?-1:1)*sp()*.25;}
+  });
+  balls=balls.filter(b=>b.y<H+30);
+  if(!balls.length){hp--;$('hp').textContent=hp;Kids.oops();if(hp<=0){run=false;over(false);return;}pad.w=Math.max(70,W*.18);newBall();}
+  items.forEach(it=>{it.y+=2.2*k;if(it.y>PY()-8&&it.y<PY()+16&&Math.abs(it.x-pad.x)<pad.w/2){it.got=true;Kids.yay(false);
+    if(it.t==='wide')pad.w=Math.min(W*.4,pad.w*1.4);else{const b0=balls.find(b=>!b.stuck)||balls[0];[-.5,.5].forEach(d=>{const s=sp(),a=-Math.PI/2+d;balls.push({x:b0.x,y:b0.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s});});}}});
+  items=items.filter(it=>!it.got&&it.y<H+20);
+  if(!bricks.length){run=false;Kids.yay();Kids.say('ステージ クリア！');setTimeout(()=>over(true),700);}
+}
+function drawBrick(b){const k=K[b.k];c.fillStyle=k[0];c.beginPath();c.roundRect(b.x,b.y,b.w,b.h,6);c.fill();c.fillStyle=k[1];c.beginPath();c.roundRect(b.x+2,b.y+2,b.w-4,b.h*.38,4);c.fill();
+  if(b.hp>1){c.strokeStyle='#fff';c.lineWidth=2;c.setLineDash([4,4]);c.strokeRect(b.x+4,b.y+4,b.w-8,b.h-8);c.setLineDash([]);}
+  else{c.fillStyle='rgba(255,255,255,.75)';for(let i=0;i<3;i++)c.fillRect(b.x+b.w*(.22+i*.25),b.y+b.h*.62,3,3);}}
+function draw(){
+  c.clearRect(0,0,W,H);c.fillStyle='rgba(255,255,255,.05)';for(let i=0;i<W;i+=40)c.fillRect(i,0,20,H);
+  bricks.forEach(drawBrick);
+  items.forEach(it=>{c.fillStyle=it.t==='wide'?'#FFC83D':'#4FC3F7';c.beginPath();c.arc(it.x,it.y,11,0,7);c.fill();c.fillStyle='#1F2A44';c.font="800 12px 'M PLUS Rounded 1c',sans-serif";c.textAlign='center';c.textBaseline='middle';c.fillText(it.t==='wide'?'↔':'×3',it.x,it.y+1);});
+  // おさら
+  const py=PY();c.fillStyle='#fff';c.beginPath();c.ellipse(pad.x,py+6,pad.w/2,9,0,0,7);c.fill();c.fillStyle='#E6E9F2';c.beginPath();c.ellipse(pad.x,py+4,pad.w/2*.7,5,0,0,7);c.fill();
+  balls.forEach(b=>{const r=BR();c.fillStyle='#FFD23F';c.beginPath();c.arc(b.x,b.y,r,0,7);c.fill();c.fillStyle='rgba(255,255,255,.8)';c.beginPath();c.arc(b.x-r*.35,b.y-r*.35,r*.3,0,7);c.fill();});
+  parts.forEach(p=>{c.globalAlpha=Math.max(0,p.l);c.fillStyle=p.col;c.fillRect(p.x,p.y,4,4);});c.globalAlpha=1;
+  if(run&&wait){c.fillStyle='rgba(255,255,255,.9)';c.font="800 18px 'M PLUS Rounded 1c',sans-serif";c.textAlign='center';c.fillText('はなすと ボールが とぶよ',W/2,H*.62);}
+}
+function loop(t){requestAnimationFrame(loop);const k=last?Math.min(2.5,(t-last)/16.7):1;last=t;if(!W)return;step(k);parts.forEach(p=>{p.x+=p.vx*k;p.y+=p.vy*k;p.l-=.03*k;});parts=parts.filter(p=>p.l>0);draw();}
+function begin(){$('ov').hidden=true;$('st').textContent=stage+1;$('hp').textContent=hp;items=[];pad.w=Math.max(70,W*.18);build();newBall();run=true;Kids.blip(800);}
+function over(win){const o=$('ov');o.hidden=false;
+  if(win){stage++;o.innerHTML=`<p class="msg">ステージ ${stage} クリア！</p><p class="sub">つぎは もっと はやいよ</p><button class="big" id="go" type="button">つぎへ</button>`;$('go').onclick=begin;}
+  else{o.innerHTML=`<p class="msg">ざんねん！</p><p class="sub">ステージ ${stage+1} まで いけたよ</p><div class="choices" id="ch"></div>`;menu();}}
+function menu(){[['ゆっくり',.8],['ふつう',1],['はやい',1.25]].forEach(([a,s],i)=>{const x=document.createElement('button');x.className='choice';x.type='button';x.innerHTML=`${'★'.repeat(i+1)}<span>${a}</span>`;x.onclick=()=>{speed=s;stage=0;hp=3;begin();};$('ch').appendChild(x);});}
+menu();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

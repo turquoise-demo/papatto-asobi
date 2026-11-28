@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>どこが ちがう？｜ぱぱっとあそび</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
-<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<link rel="stylesheet" href="../shared/kids.css?v=20261128">
 <style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#E0F0FF;padding:10px;box-sizing:border-box;display:flex;gap:10px;touch-action:none}.board.v{flex-direction:column}.board canvas{flex:1;min-width:0;min-height:0;width:100%;height:100%;background:#fff;border-radius:16px;touch-action:none}.half{flex:1;min-width:0;min-height:0;position:relative}.half canvas{position:absolute;inset:0}</style>
 </head>
 <body>
 <div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">どこが ちがう？</h1><button class="hbtn" id="hint" type="button">ヒント</button><div class="score">あと <span id="n">0</span></div></div>
 <div class="board" id="board"><div class="half"><canvas id="a"></canvas></div><div class="half"><canvas id="b"></canvas></div>
 <div class="overlay" id="ov"><p class="msg">どこが ちがう？</p><p class="sub">２つの えを くらべて<br>ちがう ところを タッチしてね</p><div class="choices" id="ch"></div></div></div></div>
-<script src="../shared/kids.js?v=20261125"></script>
+<script src="../shared/kids.js?v=20261128"></script>
 <script>
 document.getElementById('home').innerHTML=Kids.homeIcon;
 const $=i=>document.getElementById(i),A=$('a'),B=$('b'),ca=A.getContext('2d'),cb=B.getContext('2d');let W=0,H=0,obj=[],left=0,lv=0,run=false,marks=[],hintAt=0,scene=0,cols=0,rows=0;
