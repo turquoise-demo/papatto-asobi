@@ -7,86 +7,116 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
 <link rel="stylesheet" href="../shared/kids.css?v=20261125">
 <style>
-.board{background:#FFE3EC;display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}
-.grid{display:grid;gap:clamp(8px,1.6vw,16px);width:100%;height:100%;max-width:900px;margin:auto}
+.board{background:#FFE3EC;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box}
+.grid{display:grid;gap:clamp(6px,1.4vw,14px);margin:auto}
 .card{perspective:800px;border:0;padding:0;background:none;min-width:0;min-height:0}
 .in{position:relative;width:100%;height:100%;transition:transform .35s;transform-style:preserve-3d}
-.card.open .in,.card.done .in{transform:rotateY(180deg)}
-.face{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 0 rgba(0,0,0,.15)}
-.back{background:#3B6FE0;background-image:radial-gradient(circle at 50% 50%,transparent 22%,#fff 23%,#fff 28%,transparent 29%)}
-.front{background:#fff;transform:rotateY(180deg);border:4px solid #F78FB3;box-sizing:border-box}
+.card.open .in,.card.done .in,.card.peek .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 0 rgba(0,0,0,.15);overflow:hidden}
+.front{background:#fff;transform:rotateY(180deg);border:4px solid #F78FB3;box-sizing:border-box;container-type:size}
 .front svg{width:72%;height:72%}
+.front .em{font-size:min(62cqw,62cqh);line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
 .card.done .front{border-color:#8BC34A;background:#F1FAE8}
-.pick{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
-.lv{background:#fff;border:4px solid transparent;border-radius:20px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 5px 0 rgba(0,0,0,.12);font-size:18px}
-.lv:hover{border-color:var(--accent)}
-.mini{display:grid;gap:4px}
-.mini i{width:16px;height:22px;border-radius:4px;background:#3B6FE0;display:block}
+.card.done.p2 .front{border-color:#58B7FF;background:#EAF6FF}
+.card.done .in{animation:got .5s}@keyframes got{50%{transform:rotateY(180deg) scale(1.12)}}
+/* うらの もよう */
+.b0{background:#3B6FE0 radial-gradient(circle at 50% 50%,transparent 22%,#fff 23%,#fff 28%,transparent 29%)}
+.b1{background:repeating-linear-gradient(45deg,#F06292 0 10px,#F8BBD0 10px 20px)}
+.b2{background:#2E9E4F radial-gradient(#ffffff55 20%,transparent 22%) 0 0/18px 18px}
+.b3{background:linear-gradient(135deg,#FF8A65,#FFD54F 40%,#81C784 60%,#4FC3F7 80%,#9575CD)}
+.b4{background:#1F2A6B;background-image:radial-gradient(#FFE066 1.5px,transparent 2px),radial-gradient(#fff 1px,transparent 1.5px);background-size:22px 22px,13px 13px;background-position:0 0,6px 9px}
+.b5{background:repeating-conic-gradient(#8D5A3B 0 25%,#C98F5F 0 50%) 0 0/24px 24px}
+.back::after{content:"";position:absolute;inset:7px;border:3px solid rgba(255,255,255,.55);border-radius:10px}
+.set{display:flex;flex-direction:column;gap:14px;align-items:center;width:100%;max-width:720px;max-height:100%;overflow:auto;padding:4px 4px 10px;box-sizing:border-box}
+.set h3{margin:0;font-size:16px;color:#B0327A;letter-spacing:.08em}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.opt{background:#fff;border:4px solid transparent;border-radius:18px;padding:6px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 4px 0 rgba(0,0,0,.1);font-size:13px;min-width:64px}
+.opt.on{border-color:#F06292}
+.opt .ic{font-size:30px;line-height:1.1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;height:34px;display:flex;align-items:center}.opt .ic svg{width:34px;height:34px}
+.opt .bk{width:34px;height:46px;border-radius:7px;position:relative}
+.mini{display:grid;gap:3px}.mini i{width:9px;height:12px;border-radius:2px;background:#F06292;display:block}
+.hud{position:absolute;left:10px;right:10px;top:8px;display:flex;justify-content:space-between;gap:8px;pointer-events:none;z-index:2}
+.hud span{background:#fff;border-radius:999px;padding:3px 12px;font-size:15px;box-shadow:0 3px 0 rgba(0,0,0,.1);font-variant-numeric:tabular-nums}
+.hud .on{outline:4px solid currentColor}
+.name{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:20px;color:#B0327A;pointer-events:none;z-index:2;text-shadow:0 2px 0 #fff}
+.toggle{display:flex;gap:8px;align-items:center;font-size:15px}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="topbar">
-    <a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a>
-    <h1 class="title">おなじの さがし</h1>
-    <button class="hbtn" id="again"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg><span class="lbl">えらびなおす</span></button>
-  </div>
+  <div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">おなじの さがし</h1><button class="hbtn" id="again" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg><span class="lbl">せってい</span></button></div>
   <div class="board" id="board"></div>
 </div>
 <script src="../shared/kids.js?v=20261125"></script>
 <script>
 document.getElementById('home').innerHTML=Kids.homeIcon;
-const board=document.getElementById('board');
-const LEVELS=[[4,2],[6,3],[8,4],[12,4],[16,4]]; // カード枚数, 列
+const $=i=>document.getElementById(i),board=$('board');
+// 絵柄のセット（ここに足せば増える）。[絵, よみ]
+const THEMES=[
+ {n:'いつもの',draw:1,set:Kids.ICONS.map(k=>[k,{apple:'りんご',star:'ほし',heart:'ハート',fish:'さかな',flower:'おはな',sun:'おひさま',car:'くるま',cat:'ねこ',banana:'バナナ',balloon:'ふうせん'}[k]])},
+ {n:'どうぶつ',set:[['🐶','いぬ'],['🐱','ねこ'],['🐰','うさぎ'],['🐻','くま'],['🐼','パンダ'],['🦁','ライオン'],['🐯','とら'],['🐨','コアラ'],['🐷','ぶた'],['🐸','かえる'],['🐵','さる'],['🦊','きつね'],['🐮','うし'],['🐹','ハムスター'],['🐧','ペンギン'],['🦒','きりん'],['🐘','ぞう'],['🦄','ユニコーン']]},
+ {n:'くだもの',set:[['🍎','りんご'],['🍊','みかん'],['🍌','バナナ'],['🍇','ぶどう'],['🍓','いちご'],['🍉','すいか'],['🍑','もも'],['🍒','さくらんぼ'],['🍍','パイナップル'],['🥝','キウイ'],['🍋','レモン'],['🍐','なし'],['🥭','マンゴー'],['🫐','ブルーベリー'],['🍈','メロン'],['🥥','ココナッツ'],['🍅','トマト'],['🌰','くり']]},
+ {n:'おかし',set:[['🍰','ケーキ'],['🍩','ドーナツ'],['🍪','クッキー'],['🍫','チョコ'],['🍬','あめ'],['🍭','ペロペロキャンディ'],['🍦','ソフトクリーム'],['🍮','プリン'],['🧁','カップケーキ'],['🍡','だんご'],['🍿','ポップコーン'],['🥞','ホットケーキ'],['🍧','かきごおり'],['🍨','アイス'],['🥨','プレッツェル'],['🍯','はちみつ'],['🍘','せんべい'],['🥧','パイ']]},
+ {n:'のりもの',set:[['🚗','くるま'],['🚌','バス'],['🚑','きゅうきゅうしゃ'],['🚒','しょうぼうしゃ'],['🚓','パトカー'],['🚕','タクシー'],['🚜','トラクター'],['🚲','じてんしゃ'],['🚂','きかんしゃ'],['🚄','しんかんせん'],['✈️','ひこうき'],['🚁','ヘリコプター'],['🚀','ロケット'],['⛵','ヨット'],['🚢','ふね'],['🛵','バイク'],['🚚','トラック'],['🛸','ユーフォー']]},
+ {n:'うみ',set:[['🐟','さかな'],['🐠','ねったいぎょ'],['🐡','ふぐ'],['🐙','たこ'],['🦑','いか'],['🦀','かに'],['🦐','えび'],['🐳','くじら'],['🐬','いるか'],['🦈','さめ'],['🐢','かめ'],['🦭','あざらし'],['🐚','かい'],['🪸','さんご'],['🦞','ロブスター'],['🐋','ざとうくじら'],['🪼','くらげ'],['⚓','いかり']]},
+ {n:'むし・はな',set:[['🦋','ちょうちょ'],['🐞','てんとうむし'],['🐝','みつばち'],['🐛','いもむし'],['🐌','かたつむり'],['🐜','あり'],['🦗','こおろぎ'],['🌸','さくら'],['🌻','ひまわり'],['🌷','チューリップ'],['🌹','ばら'],['🌼','たんぽぽ'],['🍀','よつば'],['🍄','きのこ'],['🌵','サボテン'],['🍁','もみじ'],['🌳','き'],['🌱','めばえ']]},
+ {n:'うちゅう・てんき',set:[['☀️','たいよう'],['🌙','つき'],['⭐','ほし'],['🌈','にじ'],['☁️','くも'],['⚡','かみなり'],['❄️','ゆき'],['☔','あめ'],['🌍','ちきゅう'],['🪐','どせい'],['☄️','すいせい'],['🌪️','たつまき'],['⛄','ゆきだるま'],['🌋','かざん'],['🔥','ほのお'],['💧','しずく'],['🌊','なみ'],['🌟','きらきらぼし']]},
+ {n:'たべもの',set:[['🍙','おにぎり'],['🍣','おすし'],['🍔','ハンバーガー'],['🍕','ピザ'],['🍜','ラーメン'],['🍛','カレー'],['🍝','スパゲッティ'],['🍤','えびフライ'],['🥪','サンドイッチ'],['🍳','めだまやき'],['🥟','ぎょうざ'],['🌭','ホットドッグ'],['🍟','ポテト'],['🍱','おべんとう'],['🍞','パン'],['🧀','チーズ'],['🥕','にんじん'],['🌽','とうもろこし']]},
+ {n:'あそび・がっき',set:[['⚽','サッカーボール'],['🏀','バスケットボール'],['⚾','やきゅうボール'],['🎾','テニスボール'],['🎈','ふうせん'],['🎁','プレゼント'],['🧸','くまの ぬいぐるみ'],['🪁','たこ'],['🎨','えのぐ'],['🎸','ギター'],['🎹','ピアノ'],['🥁','たいこ'],['🎺','トランペット'],['🎻','バイオリン'],['🪀','ヨーヨー'],['🎲','サイコロ'],['🧩','パズル'],['🪅','くすだま']]},
+ {n:'かお',set:[['😀','にっこり'],['😂','おおわらい'],['😍','だいすき'],['😎','サングラス'],['😴','ねむい'],['😮','びっくり'],['😢','かなしい'],['😡','おこった'],['🤔','かんがえちゅう'],['😋','おいしい'],['🥳','パーティー'],['😜','いたずら'],['🤗','ぎゅっ'],['😇','てんし'],['🤠','カウボーイ'],['🥶','さむい'],['🥵','あつい'],['🤡','ピエロ']]}
+];
+const BACKS=['b0','b1','b2','b3','b4','b5'],SIZES=[[6,3],[8,4],[12,4],[16,4],[20,5],[24,6]];
+let S={th:1,bk:1,sz:1,mode:0,peek:1};try{Object.assign(S,JSON.parse(localStorage.getItem('memory-set')||'{}'));}catch(e){}
+const saveS=()=>{try{localStorage.setItem('memory-set',JSON.stringify(S));}catch(e){}};
+let best={};try{best=JSON.parse(localStorage.getItem('memory-best')||'{}');}catch(e){}
+const face=(th,i)=>{const it=THEMES[th].set[i];return THEMES[th].draw?Kids.icon(it[0]):`<span class="em">${it[0]}</span>`;};
+const ic=th=>THEMES[th].draw?Kids.icon('star'):THEMES[th].set[0][0];
+function opt(html,on,fn,label){const b=document.createElement('button');b.type='button';b.className='opt'+(on?' on':'');b.innerHTML=html;b.setAttribute('aria-label',label||'');b.onclick=()=>{Kids.blip();fn();menu();};return b;}
 function menu(){
-  board.innerHTML='<div class="center"><p class="msg">なんまいで あそぶ？</p><div class="pick" id="pick"></div></div>';
-  const pick=document.getElementById('pick');
-  LEVELS.forEach(([n,cols])=>{
-    const b=document.createElement('button');b.className='lv';b.type='button';b.setAttribute('aria-label',n+'まい');
-    b.innerHTML=`<div class="mini" style="grid-template-columns:repeat(${cols},16px)">${'<i></i>'.repeat(n)}</div>${n}まい`;
-    b.onclick=()=>{Kids.blip();start(n,cols);};pick.appendChild(b);
-  });
+  board.innerHTML='<div class="set"><h3>えがら</h3><div class="row" id="r1"></div><h3>カードの うら</h3><div class="row" id="r2"></div><h3>まいすう</h3><div class="row" id="r3"></div><h3>あそびかた</h3><div class="row" id="r4"></div><label class="toggle"><input type="checkbox" id="pk"> はじめに ３びょう ぜんぶ みせる</label><button class="big" id="go" type="button">はじめる</button></div>';
+  THEMES.forEach((t,i)=>$('r1').appendChild(opt(`<span class="ic">${ic(i)}</span>${t.n}`,S.th===i,()=>S.th=i,t.n)));
+  BACKS.forEach((b,i)=>$('r2').appendChild(opt(`<span class="bk back ${b}"></span>`,S.bk===i,()=>S.bk=i,'うら'+(i+1))));
+  SIZES.forEach(([n,c],i)=>{const max=THEMES[S.th].set.length*2;if(n>max)return;$('r3').appendChild(opt(`<div class="mini" style="grid-template-columns:repeat(${c},9px)">${'<i></i>'.repeat(n)}</div>${n}まい`,S.sz===i,()=>S.sz=i,n+'まい'));});
+  if(SIZES[S.sz][0]>THEMES[S.th].set.length*2)S.sz=3;
+  [['ひとりで','👤'],['ふたりで','👥'],['タイムアタック','⏱️']].forEach(([n,e],i)=>$('r4').appendChild(opt(`<span class="ic">${e}</span>${n}`,S.mode===i,()=>S.mode=i,n)));
+  $('pk').checked=!!S.peek;$('pk').onchange=e=>{S.peek=e.target.checked?1:0;saveS();};
+  $('go').onclick=()=>{Kids.blip(800);start();};saveS();
 }
-let first=null,lock=false,left=0;
-function start(n,cols){
-  const portrait=board.clientHeight>board.clientWidth;
-  const c=portrait?Math.min(cols,n<=6?2:(n<=8?2:3)):cols, r=Math.ceil(n/c);
-  const kinds=Kids.shuffle(Kids.ICONS).slice(0,n/2);
-  const deck=Kids.shuffle([...kinds,...kinds]);
-  board.innerHTML='';const g=document.createElement('div');g.className='grid';
-  g.style.gridTemplateColumns=`repeat(${c},1fr)`;g.style.gridTemplateRows=`repeat(${r},1fr)`;
-  // カードを正方形に近づける
-  const bw=board.clientWidth-28,bh=board.clientHeight-28,size=Math.min(bw/c,bh/r*1.0);
-  g.style.width=Math.min(bw,size*c)+'px';g.style.height=Math.min(bh,size*r)+'px';
-  deck.forEach(k=>{
-    const b=document.createElement('button');b.className='card';b.type='button';b.dataset.k=k;b.setAttribute('aria-label','カード');
-    b.innerHTML=`<div class="in"><div class="face back"></div><div class="face front">${Kids.icon(k)}</div></div>`;
-    b.onclick=()=>flip(b);g.appendChild(b);
-  });
-  board.appendChild(g);first=null;lock=false;left=n/2;
+let first=null,lock=false,left=0,moves=0,turn=0,pts=[0,0],t0=0,tm=null,N=0;
+function start(){
+  const[n,cols]=SIZES[S.sz];N=n;const th=THEMES[S.th];const bw=board.clientWidth-24,bh=board.clientHeight-70;
+  // いちばん大きく なる 列の数を さがす
+  let c=cols,bs=0;for(let k=2;k<=8;k++){const r=Math.ceil(n/k),s=Math.min(bw/k,bh/r*0.8);if(n%k===0||k===cols)if(s>bs){bs=s;c=k;}}
+  const r=Math.ceil(n/c);const kinds=Kids.shuffle(th.set.map((_,i)=>i)).slice(0,n/2),deck=Kids.shuffle([...kinds,...kinds]);
+  board.innerHTML=`<div class="hud"><span id="h1"></span><span id="h2"></span></div><div class="name" id="nm"></div>`;const g=document.createElement('div');g.className='grid';
+  const cw=Math.min(bw/c,bh/r*0.8);g.style.gridTemplateColumns=`repeat(${c},${cw-8}px)`;g.style.gridTemplateRows=`repeat(${r},${(cw-8)*1.25}px)`;g.style.marginTop='34px';
+  deck.forEach(k=>{const b=document.createElement('button');b.className='card';b.type='button';b.dataset.k=k;b.setAttribute('aria-label','カード');b.innerHTML=`<div class="in"><div class="face back ${BACKS[S.bk]}"></div><div class="face front">${face(S.th,k)}</div></div>`;b.onclick=()=>flip(b);g.appendChild(b);});
+  board.appendChild(g);first=null;left=n/2;moves=0;turn=0;pts=[0,0];clearInterval(tm);t0=0;hud();
+  if(S.peek){lock=true;g.querySelectorAll('.card').forEach(b=>b.classList.add('peek'));setTimeout(()=>{g.querySelectorAll('.card').forEach(b=>b.classList.remove('peek'));setTimeout(()=>{lock=false;go();},350);},3000);}else{lock=false;go();}
 }
+function go(){t0=performance.now();clearInterval(tm);tm=setInterval(hud,200);}
+function hud(){const h1=$('h1'),h2=$('h2');if(!h1)return;const sec=t0?((performance.now()-t0)/1000):0;
+  if(S.mode===1){h1.innerHTML=`あか ${pts[0]}`;h2.innerHTML=`あお ${pts[1]}`;h1.style.color='#E8342E';h2.style.color='#2563C9';h1.className=turn?'':'on';h2.className=turn?'on':'';}
+  else if(S.mode===2){h1.textContent=`${sec.toFixed(1)}びょう`;const b=best['t'+S.sz];h2.textContent=b?`ベスト ${b}びょう`:'のこり '+left+'くみ';}
+  else{h1.textContent=`めくった ${moves}かい`;h2.textContent='のこり '+left+'くみ';}}
 function flip(b){
   if(lock||b.classList.contains('open')||b.classList.contains('done'))return;
   b.classList.add('open');Kids.blip(520);
   if(!first){first=b;return;}
-  const a=first;first=null;
-  if(a.dataset.k===b.dataset.k){
-    setTimeout(()=>{a.classList.add('done');b.classList.add('done');Kids.yay(false);left--;
-      if(left===0)setTimeout(win,500);},300);
-  }else{
-    lock=true;setTimeout(()=>{a.classList.remove('open');b.classList.remove('open');lock=false;Kids.oops();},900);
-  }
+  const a=first;first=null;moves++;
+  if(a.dataset.k===b.dataset.k){lock=true;const it=THEMES[S.th].set[+a.dataset.k];
+    setTimeout(()=>{[a,b].forEach(x=>{x.classList.add('done');if(S.mode===1&&turn)x.classList.add('p2');});Kids.yay(false);Kids.say(it[1]);$('nm').textContent=it[1];left--;pts[turn]++;hud();lock=false;if(left===0)setTimeout(win,600);},300);}
+  else{lock=true;setTimeout(()=>{a.classList.remove('open');b.classList.remove('open');lock=false;Kids.oops();if(S.mode===1){turn=1-turn;Kids.say(turn?'あおの ばん':'あかの ばん');}hud();},900);}
+  hud();
 }
-function win(){
-  Kids.yay();Kids.say('ぜんぶ みつけたね！');
-  const o=document.createElement('div');o.className='center';o.style.background='rgba(255,227,236,.88)';
-  o.innerHTML=`${Kids.icon('star',110)}<p class="msg">ぜんぶ みつけたね！</p><div class="pick"><button class="big" id="more">もういっかい</button><button class="big gray" id="lv">まいすうを かえる</button></div>`;
-  board.appendChild(o);
-  const g=board.querySelector('.grid'),n=g.children.length,cols=getComputedStyle(g).gridTemplateColumns.split(' ').length;
-  document.getElementById('more').onclick=()=>start(n,LEVELS.find(l=>l[0]===n)[1]);
-  document.getElementById('lv').onclick=menu;
-}
-document.getElementById('again').onclick=menu;
+function win(){clearInterval(tm);const sec=+((performance.now()-t0)/1000).toFixed(1);let msg='ぜんぶ みつけたね！',sub='';
+  if(S.mode===0){const k='m'+S.sz,nb=!best[k]||moves<best[k];if(nb){best[k]=moves;}sub=`${moves}かいで クリア${nb?'（じこベスト！）':`（ベスト ${best[k]}かい）`}`;}
+  if(S.mode===2){const k='t'+S.sz,nb=!best[k]||sec<best[k];if(nb)best[k]=sec;sub=`${sec}びょう${nb?'（じこベスト！）':`（ベスト ${best[k]}びょう）`}`;}
+  if(S.mode===1){msg=pts[0]===pts[1]?'ひきわけ！':pts[0]>pts[1]?'あかの かち！':'あおの かち！';sub=`あか ${pts[0]}くみ　あお ${pts[1]}くみ`;}
+  try{localStorage.setItem('memory-best',JSON.stringify(best));}catch(e){}
+  Kids.yay();Kids.say(msg);const o=document.createElement('div');o.className='center';o.style.background='rgba(255,227,236,.9)';o.style.zIndex=3;
+  o.innerHTML=`<p class="msg">${msg}</p><p class="sub">${sub}</p><div class="row"><button class="big" id="more" type="button">もういっかい</button><button class="big gray" id="set" type="button">せってい</button></div>`;board.appendChild(o);$('more').onclick=start;$('set').onclick=menu;}
+$('again').onclick=()=>{clearInterval(tm);menu();};
 menu();
 </script>
 </body>
