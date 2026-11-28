@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>すうじ つなぎ｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#FFFDF2;touch-action:none}#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}.nm{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:26px;color:#2E9E4F;pointer-events:none}</style>
+</head><body>
+<div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">すうじ つなぎ</h1><div class="score">つぎは <b id="nx">1</b></div></div>
+<div class="board" id="board"><canvas id="cv"></canvas><div class="nm" id="nm"></div><div class="overlay" id="ov"><p class="msg">すうじ つなぎ</p><p class="sub">１から じゅんばんに てんを タッチ。<br>なんの え が でてくるかな？</p><div class="choices" id="ch"></div></div></div></div>
+<script src="../shared/kids.js?v=20261125"></script>
+<script>document.getElementById("home").innerHTML=Kids.homeIcon;const $=i=>document.getElementById(i); const cv=$('cv'),c=cv.getContext('2d');let W=0,H=0;function fit(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);draw();}new ResizeObserver(fit).observe($('board'));
+// 点は 0〜100 の座標
+const SH=[['ほし','#FFD23F',[[50,4],[61,36],[96,36],[68,57],[79,92],[50,71],[21,92],[32,57],[4,36],[39,36]]],['いえ','#F06292',[[18,92],[18,48],[50,14],[82,48],[82,92],[58,92],[58,66],[42,66],[42,92]]],['ハート','#E8342E',[[50,90],[22,66],[8,42],[12,22],[28,12],[44,18],[50,30],[56,18],[72,12],[88,22],[92,42],[78,66]]],['さかな','#4FC3F7',[[8,50],[28,30],[54,22],[76,32],[90,22],[90,78],[76,68],[54,78],[28,70]]],['ロケット','#9575CD',[[50,4],[64,22],[70,50],[86,74],[86,90],[66,80],[34,80],[14,90],[14,74],[30,50],[36,22]]],['ねこ','#F7931E',[[22,90],[14,56],[18,8],[38,30],[62,30],[82,8],[86,56],[78,90]]],['ヨット','#2563C9',[[48,8],[48,64],[8,64],[24,84],[80,84],[94,64],[52,64],[52,8],[82,56],[52,56]]],['かさ','#F78FB3',[[50,6],[76,12],[92,30],[96,46],[84,40],[72,46],[62,40],[54,44],[54,84],[48,92],[38,90],[34,80],[42,80],[44,86],[48,82],[48,44],[38,40],[28,46],[16,40],[4,46],[8,30],[24,12]]],['きのこ','#E8342E',[[38,92],[38,56],[8,56],[12,34],[30,14],[50,8],[70,14],[88,34],[92,56],[62,56],[62,92]]],['ペンギン','#37474F',[[50,6],[70,16],[76,40],[94,58],[78,60],[76,84],[62,94],[38,94],[24,84],[22,60],[6,58],[24,40],[30,16]]],['くるま','#E8342E',[[6,72],[6,52],[22,48],[34,28],[66,28],[78,48],[94,52],[94,72],[80,72],[74,62],[62,62],[56,72],[44,72],[38,62],[26,62],[20,72]]],['クリスマスツリー','#2E9E4F',[[50,4],[66,26],[58,26],[76,50],[64,50],[86,76],[56,76],[56,94],[44,94],[44,76],[14,76],[36,50],[24,50],[42,26],[34,26]]]];
+let k=0,nx=0,run=false,lv=0,order=[],fx=[],t=0,box={x:0,y:0,s:1};
+const P=i=>{const p=SH[k][2][i];return{x:box.x+p[0]*box.s,y:box.y+p[1]*box.s};};
+function start(){const pool=SH.map((s,i)=>i).filter(i=>lv===0?SH[i][2].length<=10:lv===1?SH[i][2].length<=13:SH[i][2].length>10);k=pool[Math.floor(Math.random()*pool.length)];nx=0;run=true;fx=[];$('nm').textContent='';$('ov').hidden=true;$('nx').textContent=1;Kids.blip(800);draw();}
+function draw(){if(!W)return;const s=Math.min(W-60,H-110)/100;box={s,x:(W-100*s)/2,y:(H-100*s)/2-16};c.clearRect(0,0,W,H);c.fillStyle='#FFFDF2';c.fillRect(0,0,W,H);c.strokeStyle='#F0E6C8';c.lineWidth=1;for(let y=0;y<H;y+=28){c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();}
+  if(!run&&nx===0)return;const pts=SH[k][2],L=pts.length,done=nx>=L;
+  if(done){c.fillStyle=SH[k][1];c.beginPath();pts.forEach((p,i)=>{const q=P(i);c[i?'lineTo':'moveTo'](q.x,q.y);});c.closePath();c.globalAlpha=Math.min(1,(t)/20);c.fill();c.globalAlpha=1;}
+  c.strokeStyle='#33264F';c.lineWidth=5;c.lineJoin=c.lineCap='round';c.beginPath();for(let i=0;i<Math.min(nx,L);i++){const q=P(i);c[i?'lineTo':'moveTo'](q.x,q.y);}if(done)c.closePath();c.stroke();
+  if(done)return;pts.forEach((_,i)=>{const q=P(i),on=i===nx,dn=i<nx;c.fillStyle=dn?'#7ED957':on?'#FFC83D':'#fff';c.strokeStyle='#33264F';c.lineWidth=3;c.beginPath();c.arc(q.x,q.y,on?15+Math.sin(t/5)*2:12,0,7);c.fill();c.stroke();c.fillStyle='#33264F';c.font=`800 ${on?17:15}px 'M PLUS Rounded 1c',sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(i+1,q.x,q.y+1);});}
+cv.addEventListener('pointerdown',e=>{if(!run)return;const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,L=SH[k][2].length;let hit=-1,bd=1e9;for(let i=0;i<L;i++){const q=P(i),d=Math.hypot(q.x-x,q.y-y);if(d<30&&d<bd){bd=d;hit=i;}}if(hit<0)return;
+  if(hit===nx){nx++;Kids.tone(440+nx*30,.1,'triangle',.07);Kids.say(String(nx));$('nx').textContent=Math.min(nx+1,L);if(nx===L){t=0;run=false;setTimeout(()=>{Kids.yay();Kids.say(SH[k][0]+'！');$('nm').textContent=SH[k][0]+'！';},300);setTimeout(()=>{const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">${SH[k][0]}！</p><div class="choices" id="ch"></div>`;menu();},2400);}}else{Kids.oops();}});
+function menu(){[['１〜10','やさしい'],['１〜13','ふつう'],['１〜22','むずかしい']].forEach(([a,b],i)=>{const x=document.createElement('button');x.className='choice';x.type='button';x.innerHTML=`${'★'.repeat(i+1)}<span>${a}</span><small>${b}</small>`;x.onclick=()=>{lv=i;start();};$('ch').appendChild(x);});}
+(function loop(){t++;if(run||t<25)draw();requestAnimationFrame(loop);})();fit();menu();
+</script></body></html>

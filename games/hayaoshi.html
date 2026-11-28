@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>はやおし たいけつ｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<style>.board{display:grid;grid-template-rows:1fr auto 1fr;touch-action:none;background:#20124a}.side{position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#fff;font-size:22px;border:0;font-family:inherit;font-weight:800;touch-action:none}.side.top{transform:rotate(180deg);background:#2563C9}.side.bot{background:#E8342E}.side b{font-size:56px;font-variant-numeric:tabular-nums}.mid{background:#fff;min-height:120px;display:flex;align-items:center;justify-content:center;font-size:clamp(46px,12vw,88px);position:relative}.mid .em{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}.rule{position:absolute;left:0;right:0;bottom:4px;text-align:center;font-size:14px;color:#6B7590}.flash{animation:fl .4s}@keyframes fl{50%{filter:brightness(1.6)}}</style>
+</head><body>
+<div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">はやおし たいけつ</h1></div>
+<div class="board" id="board"><button class="side top" id="p1" type="button"><span>あお</span><b id="s1">0</b><span id="m1"></span></button><div class="mid" id="mid"></div><button class="side bot" id="p0" type="button"><span>あか</span><b id="s0">0</b><span id="m0"></span></button>
+<div class="overlay" id="ov"><p class="msg">はやおし たいけつ</p><p class="sub">まんなかに おだいの えが でたら<br>じぶんの いろを さきに タッチ！ ちがう えで おすと ミス</p><div class="choices" id="ch"></div></div></div></div>
+<script src="../shared/kids.js?v=20261125"></script>
+<script>document.getElementById("home").innerHTML=Kids.homeIcon;const $=i=>document.getElementById(i);
+const SETS=[{n:'どうぶつ',ok:['🐶','🐱','🐰','🐼','🦁','🐸','🐵','🐷'],ng:['🍎','🚗','⚽','🍩','🌷','🎈']},{n:'くだもの',ok:['🍎','🍌','🍇','🍓','🍉','🍑','🍊','🍒'],ng:['🐶','🚌','🍩','🌻','🧸','⚡']},{n:'のりもの',ok:['🚗','🚌','🚒','🚂','✈️','🚀','🚲','🚢'],ng:['🐱','🍌','🎸','🌈','🍰','🦋']},{n:'ほし',ok:['⭐'],ng:['🌙','☀️','☁️','⚡','❄️','🌈','💧']}];
+let set=0,s=[0,0],tm=null,live=false,ok=false,lock=false,goal=5;
+function start(k){set=k;s=[0,0];$('ov').hidden=true;hud();Kids.blip(800);next();}
+function hud(){$('s0').textContent=s[0];$('s1').textContent=s[1];}
+function next(){clearTimeout(tm);lock=false;live=false;$('mid').innerHTML=`<span style="font-size:26px">「${SETS[set].n}」が でたら おす！</span><div class="rule">じゅんび…</div>`;$('m0').textContent=$('m1').textContent='';tm=setTimeout(show,1500+Math.random()*1500);}
+function show(){const S=SETS[set],good=Math.random()<.55;ok=good;const e=good?S.ok[Math.floor(Math.random()*S.ok.length)]:S.ng[Math.floor(Math.random()*S.ng.length)];$('mid').innerHTML=`<span class="em">${e}</span><div class="rule">${S.n}？</div>`;live=true;Kids.tone(good?880:440,.1,'square',.05);
+  tm=setTimeout(()=>{if(live){live=false;next();}},good?2600:1500);}
+function hit(p){if(lock)return;const o=1-p;if(!live){lock=true;clearTimeout(tm);s[o]++;hud();say(p,'はやすぎ！');Kids.oops();return end();}
+  live=false;lock=true;clearTimeout(tm);if(ok){s[p]++;say(p,'はやい！');Kids.yay(false);}else{s[o]++;say(p,'ざんねん！');Kids.oops();}hud();$('p'+p).classList.remove('flash');void $('p'+p).offsetWidth;$('p'+p).classList.add('flash');end();}
+function say(p,m){$('m'+p).textContent=m;}
+function end(){if(s[0]>=goal||s[1]>=goal){const w=s[0]>=goal?0:1;Kids.yay();setTimeout(()=>{const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">${w?'あお':'あか'}の かち！</p><p class="sub">${s[0]} − ${s[1]}</p><div class="choices" id="ch"></div>`;menu();},900);}else setTimeout(next,1300);}
+['p0','p1'].forEach((id,i)=>$(id).addEventListener('pointerdown',e=>{e.preventDefault();if($('ov').hidden)hit(i);}));
+function menu(){SETS.forEach((x,i)=>{const b=document.createElement('button');b.className='choice';b.type='button';b.innerHTML=`<span style="font-size:30px;font-family:'Apple Color Emoji','Segoe UI Emoji',sans-serif">${x.ok[0]}</span>${x.n}`;b.onclick=()=>start(i);$('ch').appendChild(b);});}
+menu();
+</script></body></html>

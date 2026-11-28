@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>とけい よめるかな｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#E3F2FD;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:12px;box-sizing:border-box}#ck{width:min(70vw,44vh,340px);height:auto}.q{font-size:22px;margin:0}.an{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(92%,460px)}.an button{border:0;border-radius:18px;padding:14px 4px;font-size:clamp(20px,5vw,28px);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.2)}.stars{font-size:22px;color:#FFB020;min-height:1.2em;letter-spacing:2px}#ck .h,#ck .m{transition:transform .5s cubic-bezier(.3,1.4,.5,1)}</style>
+</head><body>
+<div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">とけい よめるかな</h1><div class="score"><b id="sc">0</b>もん</div></div>
+<div class="board" id="board"><div class="stars" id="st"></div><svg id="ck" viewBox="0 0 200 200"></svg><p class="q">なんじ かな？</p><div class="an" id="an"></div>
+<div class="overlay" id="ov"><p class="msg">とけい よめるかな</p><p class="sub">はりを みて、なんじか えらんでね</p><div class="choices" id="ch"></div></div></div></div>
+<script src="../shared/kids.js?v=20261125"></script>
+<script>document.getElementById("home").innerHTML=Kids.homeIcon;const $=i=>document.getElementById(i);
+let lv=0,ans=null,sc=0,streak=0,busy=false;
+const COL=['#E8342E','#2563C9','#2E9E4F','#9B59B6'];
+$('ck').innerHTML=`<circle cx="100" cy="100" r="94" fill="#FFC83D"/><circle cx="100" cy="100" r="84" fill="#fff"/>${Array.from({length:60},(_,i)=>{const a=i*Math.PI/30,r1=i%5?78:73;return `<line x1="${100+Math.sin(a)*r1}" y1="${100-Math.cos(a)*r1}" x2="${100+Math.sin(a)*81}" y2="${100-Math.cos(a)*81}" stroke="#33264F" stroke-width="${i%5?1.2:3}"/>`;}).join('')}${Array.from({length:12},(_,i)=>{const a=(i+1)*Math.PI/6;return `<text x="${100+Math.sin(a)*60}" y="${100-Math.cos(a)*60+7}" text-anchor="middle" font-size="19" font-weight="800" font-family="M PLUS Rounded 1c,sans-serif" fill="#33264F">${i+1}</text>`;}).join('')}<g class="h"><line x1="100" y1="106" x2="100" y2="54" stroke="#E8342E" stroke-width="8" stroke-linecap="round"/></g><g class="m"><line x1="100" y1="110" x2="100" y2="28" stroke="#2563C9" stroke-width="5" stroke-linecap="round"/></g><circle cx="100" cy="100" r="7" fill="#33264F"/>`;
+const H=$('ck').querySelector('.h'),M=$('ck').querySelector('.m');H.style.transformOrigin=M.style.transformOrigin='100px 100px';
+const lab=(h,m)=>m===0?`${h}じ`:m===30&&lv<2?`${h}じはん`:`${h}じ${m}ふん`;
+let hRot=0,mRot=0;
+function set(h,m){const th=(h%12)*30+m*.5,tm=m*6;hRot+=((th-hRot)%360+540)%360-180;mRot+=((tm-mRot)%360+540)%360-180;H.style.transform=`rotate(${hRot}deg)`;M.style.transform=`rotate(${mRot}deg)`;}
+function q(){busy=false;const h=1+Math.floor(Math.random()*12),m=lv===0?0:lv===1?(Math.random()<.5?0:30):5*Math.floor(Math.random()*12);ans=lab(h,m);set(h,m);
+  const set2=new Set([ans]);while(set2.size<4){const hh=Math.random()<.5?((h+(Math.random()<.5?1:11)-1)%12)+1:1+Math.floor(Math.random()*12);let mm=m;if(lv>0&&Math.random()<.5)mm=lv===1?30-m:(m+[5,55,30,25][Math.floor(Math.random()*4)])%60;if(lv===2&&Math.random()<.3){mm=(m%60)/5===h%12?m:(h%12)*5;}set2.add(lab(hh,mm));}
+  $('an').innerHTML='';Kids.shuffle([...set2]).forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.style.background=COL[i];b.onclick=()=>pick(b,t);$('an').appendChild(b);});}
+function pick(b,t){if(busy)return;if(t===ans){busy=true;sc++;streak++;$('sc').textContent=sc;$('st').textContent='★'.repeat(Math.min(10,streak));Kids.yay(streak%5===0);Kids.say(ans);b.style.background='#FFB020';setTimeout(q,1400);}else{streak=0;$('st').textContent='';Kids.oops();Kids.shake(b);b.style.opacity=.35;}}
+[['ちょうど','○じ'],['はん も','○じはん'],['５ふん ごと','○じ○ふん']].forEach(([a,b],i)=>{const x=document.createElement('button');x.className='choice';x.type='button';x.innerHTML=`${'★'.repeat(i+1)}<span>${a}</span><small>${b}</small>`;x.onclick=()=>{lv=i;sc=0;streak=0;$('sc').textContent=0;$('ov').hidden=true;Kids.blip(800);q();};$('ch').appendChild(x);});
+set(10,10);
+</script></body></html>

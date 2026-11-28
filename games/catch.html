@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>フルーツ キャッチ｜ぱぱっとあそび</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="../shared/kids.css?v=20261125">
+<style>@media(max-width:600px){.title{font-size:17px;white-space:nowrap}.score{font-size:15px;padding:4px 10px;white-space:nowrap}.topbar{gap:6px;flex-wrap:nowrap}}.board{background:#BDE9FF;touch-action:none}#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}</style>
+</head><body>
+<div class="app"><div class="topbar"><a class="home" href="../index.html" aria-label="おうちへ もどる" id="home"></a><h1 class="title">フルーツ キャッチ</h1><div class="score">♥<b id="hp">3</b></div><div class="score">てん <b id="sc">0</b></div></div>
+<div class="board" id="board"><canvas id="cv"></canvas><div class="overlay" id="ov"><p class="msg">フルーツ キャッチ</p><p class="sub">かごを ゆびで うごかして くだものを キャッチ！<br>いしは よけてね。きんの ほしは ５てん</p><button class="big" id="go" type="button">はじめる</button></div></div></div>
+<script src="../shared/kids.js?v=20261125"></script>
+<script>document.getElementById("home").innerHTML=Kids.homeIcon;const $=i=>document.getElementById(i); const cv=$('cv'),c=cv.getContext('2d');let W=0,H=0;function fit(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);}new ResizeObserver(fit).observe($("board"));fit();
+const IMG={};['apple','banana','star','heart','flower'].forEach(k=>{const i=new Image();i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(Kids.icon(k).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" '));IMG[k]=i;});
+const GOOD=['apple','banana','flower','heart'];let X=0,tx=0,items=[],fx=[],t=0,run=false,hp=3,sc=0,combo=0,shake=0;
+function start(){X=tx=W/2;items=[];fx=[];t=0;hp=3;sc=0;combo=0;run=true;$('ov').hidden=true;hud();Kids.blip(800);}
+function hud(){$('hp').textContent=hp;$('sc').textContent=sc;}
+function step(){t++;const lv=1+t/1800,rate=Math.max(16,52-t/60);if(t%Math.round(rate)===0){const r=Math.random(),k=r<.05?'star':r<.27?'rock':GOOD[Math.floor(Math.random()*4)];items.push({k,x:30+Math.random()*(W-60),y:-30,vy:(1.6+Math.random()*1.2)*Math.min(2.4,lv),r:k==='rock'?20:22,rot:Math.random()*6,vr:(Math.random()-.5)*.08});}
+  X+=(tx-X)*.35;const by=H-70,bw=Math.min(110,W*.28);
+  items.forEach(o=>{o.y+=o.vy;o.rot+=o.vr;if(!o.gone&&o.y>by-14&&o.y<by+20&&Math.abs(o.x-X)<bw/2){o.gone=1;if(o.k==='rock'){hp--;combo=0;shake=14;Kids.oops();hud();if(hp<=0)over();}else{combo++;const p=o.k==='star'?5:1+Math.floor(combo/10);sc+=p;hud();Kids.tone(o.k==='star'?1200:600+Math.min(combo,12)*40,.08,'triangle',.07);fx.push({x:o.x,y:by-30,t:0,s:'+'+p});if(o.k==='star')Kids.yay(false);}}
+    if(!o.gone&&o.y>H+30){o.gone=1;if(o.k!=='rock')combo=0;}});items=items.filter(o=>!o.gone);fx=fx.filter(f=>++f.t<40);if(shake>0)shake--;}
+function over(){run=false;let b=0;try{b=+localStorage.getItem('catch-best')||0;if(sc>b)localStorage.setItem('catch-best',sc);}catch(e){}Kids.yay(sc>b);setTimeout(()=>{const o=$('ov');o.hidden=false;o.innerHTML=`<p class="msg">${sc}てん！</p><p class="sub">${sc>b?'じこベスト！':'ベスト '+b+'てん'}</p><button class="big" id="go" type="button">もういちど</button>`;$('go').onclick=start;},500);}
+function draw(){c.save();if(shake)c.translate((Math.random()-.5)*shake,0);const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'#8ED6FF');g.addColorStop(1,'#E8F9FF');c.fillStyle=g;c.fillRect(-20,0,W+40,H);
+  c.fillStyle='#7CCB5A';c.beginPath();c.ellipse(W*.2,H+30,W*.5,90,0,0,7);c.ellipse(W*.85,H+40,W*.45,100,0,0,7);c.fill();
+  items.forEach(o=>{c.save();c.translate(o.x,o.y);c.rotate(o.rot);if(o.k==='rock'){c.fillStyle='#7D7D8A';c.beginPath();c.moveTo(-20,6);c.lineTo(-12,-16);c.lineTo(8,-18);c.lineTo(20,-2);c.lineTo(12,16);c.lineTo(-10,16);c.fill();c.fillStyle='#9E9EAD';c.beginPath();c.arc(-4,-6,5,0,7);c.fill();}else{if(o.k==='star'){c.shadowColor='#FFE066';c.shadowBlur=18;}c.drawImage(IMG[o.k],-o.r*1.2,-o.r*1.2,o.r*2.4,o.r*2.4);}c.restore();});
+  const by=H-70,bw=Math.min(110,W*.28);c.fillStyle='#B5733F';c.beginPath();c.moveTo(X-bw/2,by-12);c.lineTo(X+bw/2,by-12);c.lineTo(X+bw/2-12,by+30);c.lineTo(X-bw/2+12,by+30);c.fill();c.strokeStyle='#8D5A3B';c.lineWidth=3;for(let i=1;i<5;i++){const x=X-bw/2+i*bw/5;c.beginPath();c.moveTo(x,by-12);c.lineTo(x+(x<X?3:-3),by+30);c.stroke();}c.fillStyle='#D99A5E';c.fillRect(X-bw/2-4,by-18,bw+8,9);
+  fx.forEach(f=>{c.globalAlpha=1-f.t/40;c.fillStyle='#E8342E';c.font="800 22px 'M PLUS Rounded 1c',sans-serif";c.textAlign='center';c.fillText(f.s,f.x,f.y-f.t);});c.globalAlpha=1;if(combo>=5&&run){c.fillStyle='#fff';c.font="800 18px 'M PLUS Rounded 1c',sans-serif";c.textAlign='center';c.fillText(combo+' コンボ',X,by+52);}c.restore();}
+const mv=e=>{const r=cv.getBoundingClientRect();tx=Math.max(30,Math.min(W-30,e.clientX-r.left));};cv.addEventListener('pointerdown',e=>{try{cv.setPointerCapture(e.pointerId);}catch(_){}mv(e);});cv.addEventListener('pointermove',e=>{if(e.buttons||e.pointerType!=='mouse')mv(e);});
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft')tx-=50;if(e.key==='ArrowRight')tx+=50;tx=Math.max(30,Math.min(W-30,tx));});
+let acc=0,last=performance.now();function loop(n){acc+=Math.min(60,n-last);last=n;while(acc>16.6){acc-=16.6;if(run)step();}if(W)draw();requestAnimationFrame(loop);}
+X=tx=W/2;$('go').onclick=start;requestAnimationFrame(loop);
+</script></body></html>
